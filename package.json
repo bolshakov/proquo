@@ -1,0 +1,22 @@
+{
+  "name": "proquo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub Action that prices the review burden of every PR",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "vitest run",
+    "build": "ncc build src/index.ts -o dist --minify"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "@vercel/ncc": "^0.44.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1"
+  }
+}
