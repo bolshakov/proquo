@@ -8,10 +8,9 @@ const SPLIT_NUDGE =
     "reviewers catch the most defects per line. The split buys detection quality, not saved review minutes.";
 
 const FOOTNOTE_BASE =
-    'This range is what a defect-finding review needs at published inspection rates (200–500 lines/hour) — ' +
-    'not a prediction of how long a quick skim will take. "Effective lines" discounts generated files and ' +
-    "lockfiles, which don't count toward the range. The rates and the 200/400 thresholds are heuristics drawn " +
-    "from published review studies, applied to modern PRs — useful guardrails, not laws.";
+    "These minutes are what careful defect-finding costs at 200–500 lines/hour — the rate review studies " +
+    'report, not how long a skim takes. "Effective lines" already exclude generated files and lockfiles. ' +
+    "Treat the rates and the 200/400 thresholds as guardrails, not laws.";
 
 const SESSION_NOTE =
     "This estimate's upper bound also runs longer than the ~60-minute session after which reviewer attention " +

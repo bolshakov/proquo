@@ -62,7 +62,7 @@ describe("renderComment", () => {
         expect(body).toContain("<details>");
         expect(body).toContain("<summary>");
         expect(body).toContain("</details>");
-        expect(body).toContain("not a prediction of how long a quick skim will take");
+        expect(body).toContain("not how long a skim takes");
         expect(body).not.toContain("superlinear");
     });
 
