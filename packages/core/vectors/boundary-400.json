@@ -1,0 +1,5 @@
+{
+  "description": "Exactly 400 effective lines prices at 100 minutes with no split nudge (threshold is strictly greater than 400).",
+  "files": [{"filename": "src/big.ts", "additions": 300, "deletions": 100}],
+  "expected": {"effectiveLines": 400, "excludedFiles": 0, "excludedLines": 0, "minutes": 100, "splitNudge": null}
+}

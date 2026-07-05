@@ -1,0 +1,11 @@
+{
+  "description": "800 effective lines prices at 300 minutes and triggers a split nudge saving 100 minutes.",
+  "files": [{"filename": "src/huge.ts", "additions": 500, "deletions": 300}],
+  "expected": {
+    "effectiveLines": 800,
+    "excludedFiles": 0,
+    "excludedLines": 0,
+    "minutes": 300,
+    "splitNudge": {"halfMinutes": 100, "savedMinutes": 100}
+  }
+}
