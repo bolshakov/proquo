@@ -14,8 +14,11 @@ interface Vector {
         effectiveLines: number;
         excludedFiles: number;
         excludedLines: number;
-        minutes: number;
-        splitNudge: {halfMinutes: number; savedMinutes: number} | null;
+        lowerMinutes: number;
+        upperMinutes: number;
+        tier: "green" | "yellow" | "red";
+        sessionFlag: boolean;
+        splitNudge: boolean;
     };
 }
 
@@ -34,7 +37,10 @@ describe("golden pricing vectors", () => {
             effectiveLines: size.effectiveLines,
             excludedFiles: size.excludedFiles,
             excludedLines: size.excludedLines,
-            minutes: result.minutes,
+            lowerMinutes: result.lowerMinutes,
+            upperMinutes: result.upperMinutes,
+            tier: result.tier,
+            sessionFlag: result.sessionFlag,
             splitNudge: result.splitNudge,
         }).toEqual(vector.expected);
     });

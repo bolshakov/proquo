@@ -5,8 +5,9 @@ attention.
 
 ## Why
 
-Review effort grows faster than diff size: defect detection collapses past ~400 changed lines. This action makes
-the invisible cost of a PR visible at the moment it is created, which nudges authors toward smaller PRs.
+Defect detection per line falls as a PR grows, and published review studies put a size ceiling around 400
+changed lines. This action makes that cost visible at the moment a PR is created, which nudges authors toward
+smaller PRs.
 
 ## Usage
 
@@ -43,9 +44,14 @@ With no range argument it prices the working-tree diff. The CLI and the GitHub A
 
 - Effective size = added + deleted lines, excluding lockfiles, vendored/build/generated paths, and minified
   artifacts. Pure renames count as zero.
-- Minutes = (lines / 8) x (1 + lines / 400), floored at 1 minute — superlinear on purpose. The curve reflects
-  how review quality degrades with size, and a trivial diff honestly prices as a one-minute read.
-- PRs above 400 effective lines get a split suggestion showing the reviewer time a split would save.
+- The price is a range: lower bound = effective lines / 500 x 60, upper bound = effective lines / 200 x 60,
+  floored at 5 minutes. These reflect published review inspection rates of 200-500 effective lines/hour — the
+  time a defect-finding review takes, not a guess at how fast a skim would go.
+- PRs fall into three zones. Green (up to 200 effective lines) is the size band with the best per-line defect
+  detection. Yellow (201-400) is within the ceiling review studies recommend, and also flags when its upper
+  bound passes a 60-minute focused-review session. Red (above 400) is past that ceiling.
+- Red-zone PRs get a split suggestion: breaking the PR into ≤200-line pieces restores per-line detection
+  quality.
 
 ## Development
 

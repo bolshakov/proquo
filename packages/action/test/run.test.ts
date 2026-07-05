@@ -18,9 +18,9 @@ describe("run", () => {
         });
         expect(comments.createComment).toHaveBeenCalledTimes(1);
         const body: string = comments.createComment.mock.calls[0][0].body;
-        // 100 effective lines price at 16 minutes, the lockfile lines are excluded
-        expect(body).toContain("100 effective changed lines");
-        expect(body).toContain("~16 min");
+        // 100 effective lines: lower = max(5, round(100/500*60=12)) = 12, upper = max(12, round(100/200*60=30)) = 30
+        expect(body).toContain("100 effective lines");
+        expect(body).toContain("12–30 min");
         expect(body).toContain("600 lines across 1 generated/lockfile file were excluded");
     });
 });

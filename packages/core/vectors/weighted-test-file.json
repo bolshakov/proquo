@@ -4,5 +4,14 @@
     {"filename": "src/feature.ts", "additions": 40, "deletions": 0},
     {"filename": "src/feature.test.ts", "additions": 60, "deletions": 0}
   ],
-  "expected": {"effectiveLines": 70, "excludedFiles": 0, "excludedLines": 0, "minutes": 10, "splitNudge": null}
+  "expected": {
+    "effectiveLines": 70,
+    "excludedFiles": 0,
+    "excludedLines": 0,
+    "lowerMinutes": 8,
+    "upperMinutes": 21,
+    "tier": "green",
+    "sessionFlag": false,
+    "splitNudge": false
+  }
 }

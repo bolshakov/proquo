@@ -1,5 +1,14 @@
 {
-  "description": "A tiny 4-line source change floors at one minute.",
+  "description": "A tiny 4-line source change floors at 5 minutes on both bounds, per the Cisco study's own floor advice.",
   "files": [{"filename": "src/util.ts", "additions": 3, "deletions": 1}],
-  "expected": {"effectiveLines": 4, "excludedFiles": 0, "excludedLines": 0, "minutes": 1, "splitNudge": null}
+  "expected": {
+    "effectiveLines": 4,
+    "excludedFiles": 0,
+    "excludedLines": 0,
+    "lowerMinutes": 5,
+    "upperMinutes": 5,
+    "tier": "green",
+    "sessionFlag": false,
+    "splitNudge": false
+  }
 }

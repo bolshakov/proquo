@@ -3,12 +3,54 @@ import type {SizeResult} from "@proquo/core";
 
 export const MARKER = "<!-- review-economy:price-tag -->";
 
-const FORMULA_NOTE =
-    "*Estimated from effective diff size with a superlinear curve — defect detection is known to collapse past " +
-    "~400 changed lines. Generated files and lockfiles do not count toward the price.*";
+const SPLIT_NUDGE =
+    "**Worth splitting?** Breaking this into ≤200-line PRs puts each piece back in the size band where " +
+    "reviewers catch the most defects per line. The split buys detection quality, not saved review minutes.";
+
+const FOOTNOTE_BASE =
+    "These minutes are what careful defect-finding costs at 200–500 lines/hour — the rate review studies " +
+    'report, not how long a skim takes. "Effective lines" already exclude generated files and lockfiles. ' +
+    "Treat the rates and the 200/400 thresholds as guardrails, not laws.";
+
+const SESSION_NOTE =
+    "This estimate's upper bound also runs longer than the ~60-minute session after which reviewer attention " +
+    "is known to fade — plan for a break or a second sitting.";
 
 function formatNumber(n: number): string {
     return n.toLocaleString("en-US");
+}
+
+function tierLine(effectiveLines: number, price: Price): string {
+    const n = formatNumber(effectiveLines);
+    const range = `**${price.lowerMinutes}–${price.upperMinutes} min**`;
+
+    switch (price.tier) {
+        case "green":
+            return (
+                `🟢 **${n} effective lines** — about ${range} of focused review at evidence-based rates ` +
+                "(200–500 lines/hour). That's inside the size band where reviewers catch the most defects " +
+                "per line, and small changes get their first feedback fastest."
+            );
+        case "yellow":
+            return (
+                `🟡 **${n} effective lines** — about ${range} of focused review. Past ~200 lines, defects ` +
+                "found per line start to drop, and 400 is the ceiling the largest industry review study " +
+                "recommends never exceeding."
+            );
+        case "red":
+            return (
+                `🔴 **${n} effective lines** — about ${range} of focused review, more than fits one effective ` +
+                "session. Above 400 lines reviewers stop finding defects at the small-change rate, and useful " +
+                "comments per line taper off."
+            );
+    }
+}
+
+function footnote(price: Price): string {
+    const parts = [FOOTNOTE_BASE];
+    if (price.tier === "yellow" && price.sessionFlag) parts.push(SESSION_NOTE);
+    const body = parts.join("\n\n");
+    return `<details>\n<summary>Why these numbers?</summary>\n\n${body}\n\n</details>`;
 }
 
 export function renderComment(size: SizeResult, price: Price): string {
@@ -17,10 +59,7 @@ export function renderComment(size: SizeResult, price: Price): string {
     if (size.effectiveLines === 0) {
         lines.push("This PR has no effective source changes, so its review burden is negligible.");
     } else {
-        lines.push(
-            `**${formatNumber(size.effectiveLines)} effective changed lines** — estimated review burden ` +
-            `**~${price.minutes} min** of focused reviewer attention.`,
-        );
+        lines.push(tierLine(size.effectiveLines, price));
     }
 
     if (size.excludedFiles > 0) {
@@ -32,13 +71,9 @@ export function renderComment(size: SizeResult, price: Price): string {
     }
 
     if (price.splitNudge) {
-        lines.push(
-            "",
-            `**Worth splitting?** Review cost grows faster than size: two PRs of half the size would cost ` +
-            `~${price.splitNudge.halfMinutes} min each, saving ~${price.splitNudge.savedMinutes} min of reviewer time in total.`,
-        );
+        lines.push("", SPLIT_NUDGE);
     }
 
-    lines.push("", FORMULA_NOTE);
+    lines.push("", footnote(price));
     return lines.join("\n");
 }

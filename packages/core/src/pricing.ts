@@ -1,27 +1,40 @@
-export interface SplitNudge {
-    halfMinutes: number;
-    savedMinutes: number;
-}
+export type Tier = "green" | "yellow" | "red";
 
 export interface Price {
-    minutes: number;
-    splitNudge: SplitNudge | null;
+    lowerMinutes: number;
+    upperMinutes: number;
+    tier: Tier;
+    sessionFlag: boolean;
+    splitNudge: boolean;
 }
 
-const SPLIT_NUDGE_THRESHOLD = 400;
+const GREEN_MAX_LINES = 200;
+const YELLOW_MAX_LINES = 400;
+const LOWER_BOUND_RATE = 500;
+const UPPER_BOUND_RATE = 200;
+const MINUTE_FLOOR = 5;
+const SESSION_MINUTES = 60;
 
-function minutesFor(effectiveLines: number): number {
-    if (effectiveLines <= 0) return 0;
-    return Math.max(1, Math.round((effectiveLines / 8) * (1 + effectiveLines / 400)));
+function tierFor(effectiveLines: number): Tier {
+    if (effectiveLines <= GREEN_MAX_LINES) return "green";
+    if (effectiveLines <= YELLOW_MAX_LINES) return "yellow";
+    return "red";
 }
 
 export function price(effectiveLines: number): Price {
-    const minutes = minutesFor(effectiveLines);
-    let splitNudge: SplitNudge | null = null;
-    if (effectiveLines > SPLIT_NUDGE_THRESHOLD) {
-        const halfMinutes = minutesFor(Math.round(effectiveLines / 2));
-        const savedMinutes = minutes - 2 * halfMinutes;
-        if (savedMinutes > 0) splitNudge = {halfMinutes, savedMinutes};
+    if (effectiveLines <= 0) {
+        return {lowerMinutes: 0, upperMinutes: 0, tier: "green", sessionFlag: false, splitNudge: false};
     }
-    return {minutes, splitNudge};
+
+    const lowerMinutes = Math.max(MINUTE_FLOOR, Math.round((effectiveLines / LOWER_BOUND_RATE) * 60));
+    const upperMinutes = Math.max(lowerMinutes, Math.round((effectiveLines / UPPER_BOUND_RATE) * 60));
+    const tier = tierFor(effectiveLines);
+
+    return {
+        lowerMinutes,
+        upperMinutes,
+        tier,
+        sessionFlag: upperMinutes > SESSION_MINUTES,
+        splitNudge: tier === "red",
+    };
 }
