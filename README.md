@@ -5,8 +5,9 @@ attention.
 
 ## Why
 
-Review effort grows faster than diff size: defect detection collapses past ~400 changed lines. This action makes
-the invisible cost of a PR visible at the moment it is created, which nudges authors toward smaller PRs.
+Defect detection per line falls as a PR grows, and published review studies put a size ceiling around 400
+changed lines. This action makes that cost visible at the moment a PR is created, which nudges authors toward
+smaller PRs.
 
 ## Usage
 
@@ -43,9 +44,18 @@ With no range argument it prices the working-tree diff. The CLI and the GitHub A
 
 - Effective size = added + deleted lines, excluding lockfiles, vendored/build/generated paths, and minified
   artifacts. Pure renames count as zero.
-- Minutes = (lines / 8) x (1 + lines / 400), floored at 1 minute — superlinear on purpose. The curve reflects
-  how review quality degrades with size, and a trivial diff honestly prices as a one-minute read.
-- PRs above 400 effective lines get a split suggestion showing the reviewer time a split would save.
+- The price is a range, not a point estimate: lower bound = lines / 500 x 60, upper bound = lines / 200 x 60,
+  floored at 5 minutes — derived from published review inspection rates (200-500 effective lines/hour), not a
+  prediction of how long a quick skim will take.
+- PRs sit in one of three zones: green (up to 200 effective lines, the size band with the best per-line defect
+  detection), yellow (201-400), or red (above 400, past the ceiling review studies recommend). Yellow and red
+  also flag when the upper bound exceeds a 60-minute focused-review session.
+- PRs in the red zone get a split suggestion: splitting into ≤200-line PRs restores per-line detection
+  quality. It does not claim saved reviewer minutes — nothing in the evidence backs review time growing
+  superlinearly with size, only detection quality falling.
+
+See `.docs/decisions/2026-07-05-review-burden-estimate.md` and `.docs/decisions/2026-07-05-review-burden-presentation.md`
+for the evidence and the copy this model is built from.
 
 ## Development
 
