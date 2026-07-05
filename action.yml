@@ -1,5 +1,5 @@
-name: Review price tag
-description: Comments the estimated review burden in reviewer minutes on every pull request
+name: ProQuo — Review Price Tag
+description: Prices every PR in reviewer minutes and nudges oversized diffs toward a split — makes review burden visible.
 inputs:
   github-token:
     description: Token used to read PR files and write the sticky comment
