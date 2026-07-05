@@ -27,6 +27,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+## Local CLI
+
+Price a diff before you open the PR — a pre-push self-check:
+
+```bash
+npm run build --workspace @proquo/cli
+node packages/cli/bin/proquo.mjs main...HEAD
+```
+
+With no range argument it prices the working-tree diff. The CLI and the GitHub Action share the same pricing engine (`@proquo/core`), so a diff prices identically whether you check it locally or in CI.
+
 ## How the price is computed
 
 - Effective size = added + deleted lines, excluding lockfiles, vendored/build/generated paths, and minified
