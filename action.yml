@@ -5,5 +5,5 @@ inputs:
     description: Token used to read PR files and write the sticky comment
     required: true
 runs:
-  using: node20
+  using: node24
   main: dist/index.mjs
