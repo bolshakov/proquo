@@ -1,4 +1,5 @@
-import {isExcluded} from "./exclusions";
+import {isExcluded, weightFor} from "./exclusions";
+import type {ProquoConfig} from "./config";
 
 export interface PrFile {
     filename: string;
@@ -12,16 +13,18 @@ export interface SizeResult {
     excludedFiles: number;
 }
 
-export function effectiveSize(files: PrFile[]): SizeResult {
-    const result: SizeResult = {effectiveLines: 0, excludedLines: 0, excludedFiles: 0};
+export function effectiveSize(files: PrFile[], config: ProquoConfig): SizeResult {
+    let weightedSum = 0;
+    let excludedLines = 0;
+    let excludedFiles = 0;
     for (const file of files) {
         const lines = file.additions + file.deletions;
-        if (isExcluded(file.filename)) {
-            result.excludedLines += lines;
-            result.excludedFiles += 1;
+        if (isExcluded(file.filename, config)) {
+            excludedLines += lines;
+            excludedFiles += 1;
         } else {
-            result.effectiveLines += lines;
+            weightedSum += weightFor(file.filename, config) * lines;
         }
     }
-    return result;
+    return {effectiveLines: Math.round(weightedSum), excludedLines, excludedFiles};
 }
