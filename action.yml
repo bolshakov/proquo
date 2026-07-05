@@ -1,0 +1,13 @@
+name: Review price tag
+description: Comments the estimated review burden (minutes and dollars) on every pull request
+inputs:
+  github-token:
+    description: Token used to read PR files and write the sticky comment
+    required: true
+  cost-per-minute:
+    description: Loaded cost of one reviewer minute in dollars
+    required: false
+    default: "1.25"
+runs:
+  using: node20
+  main: dist/index.js
