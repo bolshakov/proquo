@@ -1,7 +1,7 @@
 # ProQuo
 
 A GitHub Action that comments the estimated review burden of every pull request, in minutes of focused reviewer
-attention. Part of the review-economy project (see `docs/`).
+attention.
 
 ## Why
 
