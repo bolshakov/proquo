@@ -6,5 +6,8 @@
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "yaml": "^2.6.0"
   }
 }
