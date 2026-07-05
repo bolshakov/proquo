@@ -10,7 +10,6 @@ async function main(): Promise<void> {
         return;
     }
     const octokit = github.getOctokit(core.getInput("github-token", {required: true}));
-    const costPerMinute = Number(core.getInput("cost-per-minute") || "1.25");
     await run({
         listPrFiles: async () =>
             octokit.paginate(octokit.rest.pulls.listFiles, {
@@ -21,7 +20,6 @@ async function main(): Promise<void> {
             }),
         comments: octokit.rest.issues,
         target: {owner: context.repo.owner, repo: context.repo.repo, issueNumber: pr.number},
-        costPerMinute,
     });
 }
 
