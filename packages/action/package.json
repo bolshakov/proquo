@@ -1,0 +1,15 @@
+{
+  "name": "@proquo/action",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub Action wrapper for ProQuo",
+  "license": "MIT",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=../../dist/index.mjs --minify --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\""
+  },
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1",
+    "@proquo/core": "*"
+  }
+}
