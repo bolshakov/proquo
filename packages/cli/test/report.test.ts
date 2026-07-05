@@ -19,9 +19,9 @@ describe("renderReport", () => {
         expect(out).toContain("2 generated/lockfile files");
     });
 
-    it("appends the session clause in yellow when it fires", () => {
+    it("adds the session note to the footnote in yellow when it fires", () => {
         const out = renderReport({effectiveLines: 321, excludedLines: 0, excludedFiles: 0}, yellowPrice);
-        expect(out).toContain("longer than the ~60-minute pass");
+        expect(out).toContain("runs longer than the ~60-minute session");
     });
 
     it("shows the split nudge above the threshold without saved-minutes arithmetic", () => {

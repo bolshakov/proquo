@@ -1,16 +1,18 @@
 import type {Price, SizeResult} from "@proquo/core";
 
-const SESSION_CLAUSE = " Note that's longer than the ~60-minute pass in which reviewer attention holds up.";
-
 const SPLIT_NUDGE =
     "Worth splitting? Breaking this into ≤200-line PRs puts each piece back in the size band where reviewers " +
     "catch the most defects per line. The split buys detection quality, not saved review minutes.";
 
-const FOOTNOTE =
+const FOOTNOTE_BASE =
     'This range is what a defect-finding review needs at published inspection rates (200–500 lines/hour) — ' +
     'not a prediction of how long a quick skim will take. "Effective lines" discounts generated files and ' +
     "lockfiles, which don't count toward the range. The rates and the 200/400 thresholds are heuristics drawn " +
     "from published review studies, applied to modern PRs — useful guardrails, not laws.";
+
+const SESSION_NOTE =
+    "This estimate's upper bound also runs longer than the ~60-minute session after which reviewer attention " +
+    "is known to fade — plan for a break or a second sitting.";
 
 function formatNumber(n: number): string {
     return n.toLocaleString("en-US");
@@ -27,13 +29,12 @@ function tierLine(effectiveLines: number, price: Price): string {
                 "(200–500 lines/hour). That's inside the size band where reviewers catch the most defects " +
                 "per line, and small changes get their first feedback fastest."
             );
-        case "yellow": {
-            const base =
+        case "yellow":
+            return (
                 `${n} effective lines — about ${range} of focused review. Past ~200 lines, defects found ` +
                 "per line start to drop, and 400 is the ceiling the largest industry review study recommends " +
-                "never exceeding.";
-            return price.sessionFlag ? base + SESSION_CLAUSE : base;
-        }
+                "never exceeding."
+            );
         case "red":
             return (
                 `${n} effective lines — about ${range} of focused review, more than fits one effective ` +
@@ -41,6 +42,12 @@ function tierLine(effectiveLines: number, price: Price): string {
                 "comments per line taper off."
             );
     }
+}
+
+function footnote(price: Price): string {
+    const parts = [FOOTNOTE_BASE];
+    if (price.tier === "yellow" && price.sessionFlag) parts.push(SESSION_NOTE);
+    return parts.join(" ");
 }
 
 export function renderReport(size: SizeResult, price: Price): string {
@@ -63,6 +70,6 @@ export function renderReport(size: SizeResult, price: Price): string {
         lines.push(SPLIT_NUDGE);
     }
 
-    lines.push(FOOTNOTE);
+    lines.push(footnote(price));
     return lines.join("\n");
 }

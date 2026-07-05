@@ -44,18 +44,14 @@ With no range argument it prices the working-tree diff. The CLI and the GitHub A
 
 - Effective size = added + deleted lines, excluding lockfiles, vendored/build/generated paths, and minified
   artifacts. Pure renames count as zero.
-- The price is a range, not a point estimate: lower bound = lines / 500 x 60, upper bound = lines / 200 x 60,
-  floored at 5 minutes — derived from published review inspection rates (200-500 effective lines/hour), not a
-  prediction of how long a quick skim will take.
-- PRs sit in one of three zones: green (up to 200 effective lines, the size band with the best per-line defect
-  detection), yellow (201-400), or red (above 400, past the ceiling review studies recommend). Yellow and red
-  also flag when the upper bound exceeds a 60-minute focused-review session.
-- PRs in the red zone get a split suggestion: splitting into ≤200-line PRs restores per-line detection
-  quality. It does not claim saved reviewer minutes — nothing in the evidence backs review time growing
-  superlinearly with size, only detection quality falling.
-
-See `.docs/decisions/2026-07-05-review-burden-estimate.md` and `.docs/decisions/2026-07-05-review-burden-presentation.md`
-for the evidence and the copy this model is built from.
+- The price is a range: lower bound = effective lines / 500 x 60, upper bound = effective lines / 200 x 60,
+  floored at 5 minutes. These reflect published review inspection rates of 200-500 effective lines/hour — the
+  time a defect-finding review takes, not a guess at how fast a skim would go.
+- PRs fall into three zones. Green (up to 200 effective lines) is the size band with the best per-line defect
+  detection. Yellow (201-400) is within the ceiling review studies recommend, and also flags when its upper
+  bound passes a 60-minute focused-review session. Red (above 400) is past that ceiling.
+- Red-zone PRs get a split suggestion: breaking the PR into ≤200-line pieces restores per-line detection
+  quality.
 
 ## Development
 

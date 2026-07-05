@@ -34,12 +34,12 @@ describe("renderComment", () => {
         expect(body).toContain("400 is the ceiling");
     });
 
-    it("appends the session clause in yellow only when it fires", () => {
+    it("adds the session note to the footnote in yellow only when it fires", () => {
         const withSession = renderComment(size, yellowPrice);
-        expect(withSession).toContain("longer than the ~60-minute pass");
+        expect(withSession).toContain("runs longer than the ~60-minute session");
 
         const withoutSession = renderComment(size, yellowNoSessionPrice);
-        expect(withoutSession).not.toContain("longer than the ~60-minute pass");
+        expect(withoutSession).not.toContain("runs longer than the ~60-minute session");
     });
 
     it("renders the red zone with the split nudge and no saved-minutes arithmetic", () => {
