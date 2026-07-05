@@ -1,7 +1,5 @@
 # ProQuo
 
-GitHub Action that prices the review burden of every pull request.
-
 A GitHub Action that comments the estimated review burden of every pull request — minutes of focused reviewer
 attention and its dollar cost. Part of the review-economy project (see `docs/`).
 

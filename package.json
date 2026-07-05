@@ -3,15 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "description": "GitHub Action that prices the review burden of every PR",
-  "main": "dist/index.js",
+  "main": "dist/index.mjs",
   "scripts": {
     "test": "vitest run",
-    "build": "ncc build src/index.ts -o dist --minify"
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/index.mjs --minify --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\""
   },
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^26.1.0",
-    "@vercel/ncc": "^0.44.1",
+    "esbuild": "^0.28.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   },

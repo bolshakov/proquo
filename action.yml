@@ -10,4 +10,4 @@ inputs:
     default: "1.25"
 runs:
   using: node20
-  main: dist/index.js
+  main: dist/index.mjs
