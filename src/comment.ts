@@ -19,7 +19,7 @@ export function renderComment(size: SizeResult, price: Price): string {
     } else {
         lines.push(
             `**${formatNumber(size.effectiveLines)} effective changed lines** — estimated review burden ` +
-            `**~${price.minutes} min** of focused reviewer attention (≈ $${formatNumber(price.dollars)}).`,
+            `**~${price.minutes} min** of focused reviewer attention.`,
         );
     }
 

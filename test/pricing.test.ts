@@ -2,26 +2,34 @@ import {describe, expect, it} from "vitest";
 import {price} from "../src/pricing";
 
 describe("price", () => {
+    it("prices a trivial PR at the one-minute floor", () => {
+        // minutes(4) = round(0.5 * 1.01) = 1
+        expect(price(4)).toEqual({minutes: 1, splitNudge: null});
+    });
+
+    it("never rounds a non-empty diff down to zero minutes", () => {
+        expect(price(1).minutes).toBe(1);
+    });
+
     it("prices a small PR without a split nudge", () => {
-        // minutes(100) = round(5 + 12.5 * 1.25) = 21, dollars = round(21 * 1.25) = 26
-        expect(price(100, 1.25)).toEqual({minutes: 21, dollars: 26, splitNudge: null});
+        // minutes(100) = round(12.5 * 1.25) = 16
+        expect(price(100)).toEqual({minutes: 16, splitNudge: null});
     });
 
     it("prices the 400-line quality-collapse point without a nudge", () => {
-        // minutes(400) = round(5 + 50 * 2) = 105
-        expect(price(400, 1.25)).toEqual({minutes: 105, dollars: 131, splitNudge: null});
+        // minutes(400) = round(50 * 2) = 100
+        expect(price(400)).toEqual({minutes: 100, splitNudge: null});
     });
 
     it("adds a split nudge above 400 effective lines", () => {
-        // minutes(800) = round(5 + 100 * 3) = 305, minutes(400) = 105, saved = 305 - 210 = 95
-        expect(price(800, 1.25)).toEqual({
-            minutes: 305,
-            dollars: 381,
-            splitNudge: {halfMinutes: 105, savedMinutes: 95},
+        // minutes(800) = round(100 * 3) = 300, minutes(400) = 100, saved = 300 - 200 = 100
+        expect(price(800)).toEqual({
+            minutes: 300,
+            splitNudge: {halfMinutes: 100, savedMinutes: 100},
         });
     });
 
     it("prices an empty diff at zero", () => {
-        expect(price(0, 1.25)).toEqual({minutes: 0, dollars: 0, splitNudge: null});
+        expect(price(0)).toEqual({minutes: 0, splitNudge: null});
     });
 });
