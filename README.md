@@ -44,3 +44,5 @@ npm install
 npm test
 npm run build   # regenerates dist/, commit it
 ```
+
+<!-- smoke test line 1 -->
