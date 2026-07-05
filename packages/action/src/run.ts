@@ -1,6 +1,5 @@
 import {renderComment} from "./comment";
-import {price} from "./pricing";
-import {effectiveSize, type PrFile} from "./size";
+import {price, effectiveSize, type PrFile} from "@proquo/core";
 import {upsertStickyComment, type IssueCommentsApi} from "./sticky";
 
 export interface RunDeps {

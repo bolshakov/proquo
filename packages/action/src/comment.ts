@@ -1,5 +1,5 @@
-import type {Price} from "./pricing";
-import type {SizeResult} from "./size";
+import type {Price} from "@proquo/core";
+import type {SizeResult} from "@proquo/core";
 
 export const MARKER = "<!-- review-economy:price-tag -->";
 

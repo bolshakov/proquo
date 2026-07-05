@@ -1,0 +1,15 @@
+{
+  "name": "@proquo/cli",
+  "version": "0.1.0",
+  "description": "ProQuo command-line interface — price a local git diff in reviewer minutes",
+  "license": "MIT",
+  "bin": {
+    "proquo": "bin/proquo.mjs"
+  },
+  "scripts": {
+    "build": "node build.mjs && chmod +x bin/proquo.mjs"
+  },
+  "dependencies": {
+    "@proquo/core": "*"
+  }
+}

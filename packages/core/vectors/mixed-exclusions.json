@@ -1,0 +1,9 @@
+{
+  "description": "A lockfile and a generated snapshot are excluded; only the 100 source lines are priced.",
+  "files": [
+    {"filename": "src/feature.ts", "additions": 60, "deletions": 40},
+    {"filename": "package-lock.json", "additions": 900, "deletions": 100},
+    {"filename": "test/__snapshots__/feature.snap", "additions": 50, "deletions": 0}
+  ],
+  "expected": {"effectiveLines": 100, "excludedFiles": 2, "excludedLines": 1050, "minutes": 16, "splitNudge": null}
+}
