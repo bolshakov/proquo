@@ -2,7 +2,7 @@ import {readFileSync, readdirSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 import {dirname, join} from "node:path";
 import {describe, expect, it} from "vitest";
-import {effectiveSize, price} from "../src/index";
+import {DEFAULT_CONFIG, effectiveSize, price} from "../src/index";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const vectorsDir = join(here, "..", "vectors");
@@ -28,7 +28,7 @@ describe("golden pricing vectors", () => {
 
     it.each(fileNames)("%s reproduces its recorded price", (fileName) => {
         const vector = JSON.parse(readFileSync(join(vectorsDir, fileName), "utf8")) as Vector;
-        const size = effectiveSize(vector.files);
+        const size = effectiveSize(vector.files, DEFAULT_CONFIG);
         const result = price(size.effectiveLines);
         expect({
             effectiveLines: size.effectiveLines,
