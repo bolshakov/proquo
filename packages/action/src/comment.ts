@@ -50,7 +50,8 @@ function tierLine(effectiveLines: number, price: Price): string {
 function footnote(price: Price): string {
     const parts = [FOOTNOTE_BASE];
     if (price.tier === "yellow" && price.sessionFlag) parts.push(SESSION_NOTE);
-    return `*${parts.join(" ")}*`;
+    const body = parts.join("\n\n");
+    return `<details>\n<summary>Why these numbers?</summary>\n\n${body}\n\n</details>`;
 }
 
 export function renderComment(size: SizeResult, price: Price): string {

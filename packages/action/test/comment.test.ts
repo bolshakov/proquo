@@ -57,10 +57,24 @@ describe("renderComment", () => {
         expect(body).not.toContain("Worth splitting?");
     });
 
-    it("includes the footnote and drops the superlinear claim", () => {
+    it("puts the explanation behind a collapsed details disclosure", () => {
         const body = renderComment(size, yellowPrice);
+        expect(body).toContain("<details>");
+        expect(body).toContain("<summary>");
+        expect(body).toContain("</details>");
         expect(body).toContain("not a prediction of how long a quick skim will take");
         expect(body).not.toContain("superlinear");
+    });
+
+    it("nests the session note inside the same disclosure, after the summary", () => {
+        const body = renderComment(size, yellowPrice);
+        const detailsStart = body.indexOf("<details>");
+        const summaryEnd = body.indexOf("</summary>");
+        const sessionNoteIndex = body.indexOf("runs longer than the ~60-minute session");
+        const detailsEnd = body.indexOf("</details>");
+        expect(detailsStart).toBeGreaterThanOrEqual(0);
+        expect(sessionNoteIndex).toBeGreaterThan(summaryEnd);
+        expect(sessionNoteIndex).toBeLessThan(detailsEnd);
     });
 
     it("never mentions money", () => {
