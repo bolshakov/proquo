@@ -6,6 +6,9 @@
   "bin": {
     "proquo": "bin/proquo.mjs"
   },
+  "scripts": {
+    "build": "node build.mjs && chmod +x bin/proquo.mjs"
+  },
   "dependencies": {
     "@proquo/core": "*"
   }
