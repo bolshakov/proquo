@@ -1,5 +1,14 @@
 {
   "description": "A PR that only touches a lockfile has zero effective lines and negligible burden.",
   "files": [{"filename": "yarn.lock", "additions": 200, "deletions": 50}],
-  "expected": {"effectiveLines": 0, "excludedFiles": 1, "excludedLines": 250, "minutes": 0, "splitNudge": null}
+  "expected": {
+    "effectiveLines": 0,
+    "excludedFiles": 1,
+    "excludedLines": 250,
+    "lowerMinutes": 0,
+    "upperMinutes": 0,
+    "tier": "green",
+    "sessionFlag": false,
+    "splitNudge": false
+  }
 }

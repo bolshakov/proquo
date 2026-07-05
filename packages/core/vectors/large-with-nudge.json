@@ -1,11 +1,14 @@
 {
-  "description": "800 effective lines prices at 300 minutes and triggers a split nudge saving 100 minutes.",
+  "description": "800 effective lines is in the red zone (96-240 minutes), flags the session, and triggers the split nudge — which now claims restored detection quality, not saved minutes.",
   "files": [{"filename": "src/huge.ts", "additions": 500, "deletions": 300}],
   "expected": {
     "effectiveLines": 800,
     "excludedFiles": 0,
     "excludedLines": 0,
-    "minutes": 300,
-    "splitNudge": {"halfMinutes": 100, "savedMinutes": 100}
+    "lowerMinutes": 96,
+    "upperMinutes": 240,
+    "tier": "red",
+    "sessionFlag": true,
+    "splitNudge": true
   }
 }
