@@ -22,7 +22,7 @@ jobs:
   price:
     runs-on: ubuntu-latest
     steps:
-      - uses: bolshakov/proquo@main
+      - uses: bolshakov/proquo@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
