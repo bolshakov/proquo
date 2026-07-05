@@ -6,9 +6,15 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "lib"
+    "noEmit": true,
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@proquo/core": ["packages/core/src/index.ts"]
+    }
   },
   "include": [
-    "src/**/*.ts"
+    "packages/*/src/**/*.ts",
+    "packages/*/test/**/*.ts"
   ]
 }

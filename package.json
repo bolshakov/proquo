@@ -1,13 +1,15 @@
 {
-  "name": "proquo",
+  "name": "proquo-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "GitHub Action that prices the review burden of every PR",
-  "main": "dist/index.mjs",
+  "description": "ProQuo — prices the review burden of every pull request",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "test": "vitest run",
     "lint": "tsc --noEmit",
-    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/index.mjs --minify --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\""
+    "build": "npm run build --workspace @proquo/action"
   },
   "license": "MIT",
   "devDependencies": {
@@ -15,9 +17,5 @@
     "esbuild": "^0.28.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
-  },
-  "dependencies": {
-    "@actions/core": "^3.0.1",
-    "@actions/github": "^9.1.1"
   }
 }
