@@ -11,7 +11,7 @@ the invisible cost of a PR visible at the moment it is created, which nudges aut
 ## Usage
 
 ```yaml
-name: price-tag
+name: 🏷️ ProQuo
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -20,6 +20,7 @@ permissions:
   pull-requests: write
 jobs:
   price:
+    name: Review Price Tag
     runs-on: ubuntu-latest
     steps:
       - uses: bolshakov/proquo@v1
