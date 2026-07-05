@@ -51,10 +51,10 @@ const DEFAULT_WEIGHTS: WeightRule[] = [
     {pattern: "**/__tests__/**", weight: DEFAULT_TEST_WEIGHT},
 ];
 
-export const DEFAULT_CONFIG: ProquoConfig = {
-    exclude: DEFAULT_EXCLUDE,
-    weights: DEFAULT_WEIGHTS,
-};
+export const DEFAULT_CONFIG: ProquoConfig = Object.freeze({
+    exclude: Object.freeze(DEFAULT_EXCLUDE),
+    weights: Object.freeze(DEFAULT_WEIGHTS),
+}) as ProquoConfig;
 
 interface RawConfig {
     exclude?: unknown;
