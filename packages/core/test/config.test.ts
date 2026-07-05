@@ -38,6 +38,14 @@ describe("parseConfigFile", () => {
         expect(() => parseConfigFile("weights:\n  - pattern: 5\n    weight: 0.3\n")).toThrow(/weights/);
     });
 
+    it("throws when a weights entry has a negative weight", () => {
+        expect(() => parseConfigFile('weights:\n  - pattern: "**/e2e/**"\n    weight: -1\n')).toThrow(/weights/);
+    });
+
+    it("throws when a weights entry has a non-finite weight", () => {
+        expect(() => parseConfigFile('weights:\n  - pattern: "**/e2e/**"\n    weight: .nan\n')).toThrow(/weights/);
+    });
+
     it("throws on malformed YAML", () => {
         expect(() => parseConfigFile("exclude: [\n")).toThrow();
     });

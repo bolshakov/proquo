@@ -79,9 +79,12 @@ function validateWeights(raw: unknown): WeightRule[] {
             typeof entry !== "object" ||
             entry === null ||
             typeof (entry as {pattern?: unknown}).pattern !== "string" ||
-            typeof (entry as {weight?: unknown}).weight !== "number"
+            !Number.isFinite((entry as {weight?: unknown}).weight) ||
+            ((entry as {weight: number}).weight as number) < 0
         ) {
-            throw new Error(".proquo.yml: each `weights` entry needs a string `pattern` and numeric `weight`");
+            throw new Error(
+                ".proquo.yml: each `weights` entry needs a string `pattern` and a non-negative numeric `weight`",
+            );
         }
         return entry as WeightRule;
     });
