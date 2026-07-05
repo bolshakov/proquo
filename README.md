@@ -1,4 +1,4 @@
-# ProQuo
+# 🏷️ ProQuo
 
 A GitHub Action that comments the estimated review burden of every pull request, in minutes of focused reviewer
 attention.
