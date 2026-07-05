@@ -6,6 +6,7 @@
   "main": "dist/index.mjs",
   "scripts": {
     "test": "vitest run",
+    "lint": "tsc --noEmit",
     "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/index.mjs --minify --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\""
   },
   "license": "MIT",
