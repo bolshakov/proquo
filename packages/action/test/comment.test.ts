@@ -116,6 +116,16 @@ describe("renderComment", () => {
         expect(body).toContain("down from 70–130 min");
     });
 
+    it("places the delta clause inline right after the current range", () => {
+        const price: Price = {lowerMinutes: 20, upperMinutes: 50, tier: "yellow", sessionFlag: false, splitNudge: false};
+        const body = renderComment(
+            {effectiveLines: 167, excludedLines: 0, excludedFiles: 0},
+            price,
+            {lowerMinutes: 23, upperMinutes: 57},
+        );
+        expect(body).toContain("**167 effective lines** — about **20–50 min** (down from 23–57 min) of focused review");
+    });
+
     it("shows a delta line with the full previous range when the average rose", () => {
         // previous avg (10+20)/2=15, current avg 67.5 -> well past the 1% gate
         const body = renderComment(size, yellowPrice, {lowerMinutes: 10, upperMinutes: 20});

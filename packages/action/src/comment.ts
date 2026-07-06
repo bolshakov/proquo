@@ -24,9 +24,9 @@ function formatRange(lowerMinutes: number, upperMinutes: number): string {
     return lowerMinutes === upperMinutes ? `${lowerMinutes} min` : `${lowerMinutes}–${upperMinutes} min`;
 }
 
-function tierLine(effectiveLines: number, price: Price): string {
+function tierLine(effectiveLines: number, price: Price, deltaClause: string): string {
     const n = formatNumber(effectiveLines);
-    const range = `**${formatRange(price.lowerMinutes, price.upperMinutes)}**`;
+    const range = `**${formatRange(price.lowerMinutes, price.upperMinutes)}**${deltaClause}`;
 
     switch (price.tier) {
         case "green":
@@ -74,14 +74,14 @@ export function parsePreviousPrice(body: string): PreviousPrice | null {
 
 const DELTA_THRESHOLD = 0.01;
 
-function deltaLine(price: Price, previous: PreviousPrice): string | null {
+function deltaClause(price: Price, previous: PreviousPrice): string {
     const currentAvg = (price.lowerMinutes + price.upperMinutes) / 2;
     const previousAvg = (previous.lowerMinutes + previous.upperMinutes) / 2;
-    if (currentAvg === previousAvg) return null;
-    if (previousAvg > 0 && Math.abs(currentAvg - previousAvg) / previousAvg <= DELTA_THRESHOLD) return null;
+    if (currentAvg === previousAvg) return "";
+    if (previousAvg > 0 && Math.abs(currentAvg - previousAvg) / previousAvg <= DELTA_THRESHOLD) return "";
 
     const direction = currentAvg < previousAvg ? "down" : "up";
-    return `${direction} from ${formatRange(previous.lowerMinutes, previous.upperMinutes)}`;
+    return ` (${direction} from ${formatRange(previous.lowerMinutes, previous.upperMinutes)})`;
 }
 
 function footnote(price: Price): string {
@@ -97,11 +97,8 @@ export function renderComment(size: SizeResult, price: Price, previousPrice?: Pr
     if (size.effectiveLines === 0) {
         lines.push("This PR has no effective source changes, so its review burden is negligible.");
     } else {
-        lines.push(tierLine(size.effectiveLines, price));
-        if (previousPrice) {
-            const delta = deltaLine(price, previousPrice);
-            if (delta) lines.push("", delta);
-        }
+        const delta = previousPrice ? deltaClause(price, previousPrice) : "";
+        lines.push(tierLine(size.effectiveLines, price, delta));
     }
 
     if (size.excludedFiles > 0) {
