@@ -53,6 +53,28 @@ With no range argument it prices the working-tree diff. The CLI and the GitHub A
 - Red-zone PRs get a split suggestion: breaking the PR into ≤200-line pieces restores per-line detection
   quality.
 
+## Configuration
+
+Drop a `.proquo.yml` in the repo root to tune what counts. Both the Action and the CLI read the same file.
+
+```yaml
+exclude:
+  - "**/*.generated.ts"
+  - "**/e2e/**"
+
+weights:
+  - pattern: "**/e2e/**"
+    weight: 0.3
+```
+
+- `exclude`: extra glob patterns added to the built-in defaults (lockfiles, `node_modules`, `vendor`,
+  `dist`/`build`, generated/snapshot files, minified assets). You cannot remove a built-in exclusion, only
+  add to it.
+- `weights`: glob patterns mapped to a per-line weight. Matched in order, with your patterns checked
+  before the built-ins, so a rule here overrides a default for the same file. Defaults already down-weight
+  test files (`*.test.*`, `*.spec.*`, `test/`, `tests/`, `spec/`, `__tests__/`) at 0.5 — tests are still
+  reviewed, just faster per line than core logic. Any file not matched by a pattern keeps a weight of 1.
+
 ## Development
 
 ```bash
