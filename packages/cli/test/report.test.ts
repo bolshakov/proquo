@@ -13,6 +13,12 @@ describe("renderReport", () => {
         expect(out).toContain("12–30 min");
     });
 
+    it("reports no-range estimate when range bounds are equal", () => {
+        const price = {lowerMinutes: 5, upperMinutes: 5, tier: "green", sessionFlag: false, splitNudge: false}
+        const out = renderReport({effectiveLines: 100, excludedLines: 0, excludedFiles: 0}, price);
+        expect(out).toContain("5 min");
+    })
+
     it("notes excluded generated/lockfile lines when present", () => {
         const out = renderReport({effectiveLines: 100, excludedLines: 1050, excludedFiles: 2}, greenPrice);
         expect(out).toContain("1,050");

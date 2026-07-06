@@ -27,6 +27,12 @@ describe("renderComment", () => {
         expect(body).toContain("size band where reviewers catch the most defects per line");
     });
 
+    it("renders no-range estimate when range bounds are equal", () => {
+        const price = {lowerMinutes: 5, upperMinutes: 5, tier: "green", sessionFlag: false, splitNudge: false}
+        const body = renderComment({effectiveLines: 50, excludedLines: 0, excludedFiles: 0}, price);
+        expect(body).toContain("**5 min**");
+    })
+
     it("renders the yellow zone", () => {
         const body = renderComment(size, yellowPrice);
         expect(body).toContain("🟡 **312 effective lines**");
