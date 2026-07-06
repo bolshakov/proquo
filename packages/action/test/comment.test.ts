@@ -24,7 +24,7 @@ describe("renderComment", () => {
         const body = renderComment({effectiveLines: 50, excludedLines: 0, excludedFiles: 0}, greenPrice);
         expect(body).toContain("🟢 **50 effective lines**");
         expect(body).toContain("**6–15 min**");
-        expect(body).toContain("size band where reviewers catch the most defects per line");
+        expect(body).toContain("This is within the range where reviewers find the most issues per line");
     });
 
     it("renders no-range estimate when range bounds are equal", () => {
@@ -37,7 +37,7 @@ describe("renderComment", () => {
         const body = renderComment(size, yellowPrice);
         expect(body).toContain("🟡 **312 effective lines**");
         expect(body).toContain("**39–96 min**");
-        expect(body).toContain("400 is the ceiling");
+        expect(body).toContain("400 lines is the upper limit");
     });
 
     it("adds the session note to the footnote in yellow only when it fires", () => {

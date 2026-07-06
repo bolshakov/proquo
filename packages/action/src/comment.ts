@@ -31,22 +31,22 @@ function tierLine(effectiveLines: number, price: Price, deltaClause: string): st
     switch (price.tier) {
         case "green":
             return (
-                `🟢 **${n} effective lines** — about ${range} of focused review at evidence-based rates ` +
-                "(200–500 lines/hour). That's inside the size band where reviewers catch the most defects " +
-                "per line, and small changes get their first feedback fastest."
+                `🟢 **${n} effective lines** — about ${range} of focused review ` +
+                "(based on 200–500 lines/hour). This is within the range where reviewers find the most issues per line, " +
+                "and small changes usually receive feedback the fastest."
             );
         case "yellow":
             return (
-                `🟡 **${n} effective lines** — about ${range} of focused review. Past ~200 lines, defects ` +
-                "found per line start to drop, and 400 is the ceiling the largest industry review study " +
-                "recommends never exceeding."
+                `🟡 **${n} effective lines** — about ${range} of focused review. Beyond ~200 lines, reviewers tend ` +
+                "to find fewer issues per line, and 400 lines is the upper limit recommended by the largest "  +
+                "industry study on code reviews."
             );
         case "red":
             return (
-                `🔴 **${n} effective lines** — about ${range} of focused review, more than fits one effective ` +
-                "session. Above 400 lines reviewers stop finding defects at the small-change rate, and useful " +
-                "comments per line taper off."
-            );
+                `🔴 **${n} effective lines** — about ${range} of focused review, more than comfortably fits ` +
+                "in a single review session. Beyond 400 lines, review effectiveness drops and reviewers tend " +
+                "to leave fewer useful comments per line."
+            )
     }
 }
 
