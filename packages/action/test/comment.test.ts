@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {MARKER, renderComment} from "../src/comment";
+import {MARKER, parsePreviousPrice, renderComment} from "../src/comment";
 import type {Price} from "@proquo/core";
 
 const size = {effectiveLines: 312, excludedLines: 1204, excludedFiles: 2};
@@ -103,5 +103,58 @@ describe("renderComment", () => {
             {lowerMinutes: 0, upperMinutes: 0, tier: "green", sessionFlag: false, splitNudge: false},
         );
         expect(body).toContain("no effective source changes");
+    });
+
+    it("embeds a machine-parsable price-data comment", () => {
+        const body = renderComment(size, yellowPrice);
+        expect(body).toContain('<!-- review-economy:price-data {"lowerMinutes":39,"upperMinutes":96} -->');
+    });
+
+    it("shows a delta line with the full previous range when the average dropped", () => {
+        // previous avg (70+130)/2=100, current avg (39+96)/2=67.5 -> 32.5% down, well past the 1% gate
+        const body = renderComment(size, yellowPrice, {lowerMinutes: 70, upperMinutes: 130});
+        expect(body).toContain("down from 70–130 min");
+    });
+
+    it("shows a delta line with the full previous range when the average rose", () => {
+        // previous avg (10+20)/2=15, current avg 67.5 -> well past the 1% gate
+        const body = renderComment(size, yellowPrice, {lowerMinutes: 10, upperMinutes: 20});
+        expect(body).toContain("up from 10–20 min");
+    });
+
+    it("omits the delta line when the average moved by 1% or less", () => {
+        // previous avg 68, current avg 67.5 -> 0.74% move
+        const body = renderComment(size, yellowPrice, {lowerMinutes: 68, upperMinutes: 68});
+        expect(body).not.toMatch(/(down|up) from/);
+    });
+
+    it("omits the delta line when there is no previous price", () => {
+        const body = renderComment(size, yellowPrice, null);
+        expect(body).not.toMatch(/(down|up) from/);
+    });
+
+    it("omits the delta line for an effectively empty diff even with a previous price", () => {
+        const body = renderComment(
+            {effectiveLines: 0, excludedLines: 0, excludedFiles: 0},
+            {lowerMinutes: 0, upperMinutes: 0, tier: "green", sessionFlag: false, splitNudge: false},
+            {lowerMinutes: 40, upperMinutes: 66},
+        );
+        expect(body).not.toMatch(/(down|up) from/);
+    });
+});
+
+describe("parsePreviousPrice", () => {
+    it("reads the embedded price-data comment", () => {
+        const body = renderComment(size, yellowPrice);
+        expect(parsePreviousPrice(body)).toEqual({lowerMinutes: 39, upperMinutes: 96});
+    });
+
+    it("returns null when the comment has no price-data marker", () => {
+        expect(parsePreviousPrice("some unrelated comment body")).toBeNull();
+    });
+
+    it("returns null when the embedded data is malformed", () => {
+        const body = "<!-- review-economy:price-data not-json -->";
+        expect(parsePreviousPrice(body)).toBeNull();
     });
 });
