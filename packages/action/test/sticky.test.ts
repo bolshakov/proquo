@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from "vitest";
 import {MARKER} from "../src/comment";
-import {upsertStickyComment} from "../src/sticky";
+import {findStickyComment, upsertStickyComment} from "../src/sticky";
 
 const target = {owner: "o", repo: "r", issueNumber: 7};
 
@@ -12,10 +12,25 @@ function apiWith(comments: Array<{ id: number; body?: string }>) {
     };
 }
 
+describe("findStickyComment", () => {
+    it("returns null when no marked comment exists", async () => {
+        const api = apiWith([{id: 1, body: "unrelated"}]);
+        expect(await findStickyComment(api, target)).toBeNull();
+    });
+
+    it("returns the marked comment when one exists", async () => {
+        const api = apiWith([
+            {id: 1, body: "unrelated"},
+            {id: 2, body: `${MARKER}\nold body`},
+        ]);
+        expect(await findStickyComment(api, target)).toEqual({id: 2, body: `${MARKER}\nold body`});
+    });
+});
+
 describe("upsertStickyComment", () => {
     it("creates a comment when no marked comment exists", async () => {
         const api = apiWith([{id: 1, body: "unrelated"}]);
-        await upsertStickyComment(api, target, `${MARKER}\nnew body`);
+        await upsertStickyComment(api, target, `${MARKER}\nnew body`, null);
         expect(api.createComment).toHaveBeenCalledWith({
             owner: "o",
             repo: "r",
@@ -30,7 +45,7 @@ describe("upsertStickyComment", () => {
             {id: 1, body: "unrelated"},
             {id: 2, body: `${MARKER}\nold body`},
         ]);
-        await upsertStickyComment(api, target, `${MARKER}\nnew body`);
+        await upsertStickyComment(api, target, `${MARKER}\nnew body`, {id: 2, body: `${MARKER}\nold body`});
         expect(api.updateComment).toHaveBeenCalledWith({
             owner: "o",
             repo: "r",
