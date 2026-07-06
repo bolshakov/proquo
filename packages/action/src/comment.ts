@@ -22,7 +22,8 @@ function formatNumber(n: number): string {
 
 function tierLine(effectiveLines: number, price: Price): string {
     const n = formatNumber(effectiveLines);
-    const range = `**${price.lowerMinutes}–${price.upperMinutes} min**`;
+    const rangeBounds = price.lowerMinutes === price.upperMinutes ? price.lowerMinutes : `${price.lowerMinutes}–${price.upperMinutes}`;
+    const range = `**${rangeBounds} min**`;
 
     switch (price.tier) {
         case "green":
