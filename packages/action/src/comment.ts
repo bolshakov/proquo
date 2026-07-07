@@ -7,6 +7,13 @@ const SPLIT_NUDGE =
     "**Worth splitting?** Breaking this into ≤200-line PRs puts each piece back in the size band where " +
     "reviewers catch the most defects per line. The split buys detection quality, not saved review minutes.";
 
+const FILE_SPREAD_THRESHOLD = 10;
+
+const FILE_SPREAD_NOTE =
+    "**Spread across many files.** This PR changes {fileCount} files — more than about 9 in 10 PRs touch. " +
+    "Each extra file is another piece of context a reviewer has to load and hold at once, so a change spread " +
+    "this wide is harder to review even when it isn't especially large.";
+
 const FOOTNOTE_BASE =
     "These minutes are what careful defect-finding costs at 200–500 lines/hour — the rate review studies " +
     'report, not how long a skim takes. "Effective lines" already exclude generated files and lockfiles. ' +
@@ -18,6 +25,11 @@ const SESSION_NOTE =
 
 function formatNumber(n: number): string {
     return n.toLocaleString("en-US");
+}
+
+function fileSpreadNote(pricedFiles: number): string | null {
+    if (pricedFiles < FILE_SPREAD_THRESHOLD) return null;
+    return FILE_SPREAD_NOTE.replace("{fileCount}", formatNumber(pricedFiles));
 }
 
 function formatRange(lowerMinutes: number, upperMinutes: number): string {
@@ -107,6 +119,11 @@ export function renderComment(size: SizeResult, price: Price, previousPrice?: Pr
             "",
             `${formatNumber(size.excludedLines)} lines across ${size.excludedFiles} generated/lockfile ${fileWord} were excluded from the price.`,
         );
+    }
+
+    const spreadNote = fileSpreadNote(size.pricedFiles);
+    if (spreadNote) {
+        lines.push("", spreadNote);
     }
 
     if (price.splitNudge) {
