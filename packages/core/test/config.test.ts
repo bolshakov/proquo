@@ -64,6 +64,43 @@ describe("mergeConfig", () => {
     });
 });
 
+describe("parseConfigFile - commentWeight", () => {
+    it("parses a valid commentWeight", () => {
+        expect(parseConfigFile("commentWeight: 0.4\n")).toEqual({
+            exclude: [],
+            weights: [],
+            commentWeight: 0.4,
+        });
+    });
+
+    it("leaves commentWeight undefined when absent", () => {
+        expect(parseConfigFile("").commentWeight).toBeUndefined();
+    });
+
+    it("throws when commentWeight is not a non-negative number", () => {
+        expect(() => parseConfigFile("commentWeight: fast\n")).toThrow(/commentWeight/);
+        expect(() => parseConfigFile("commentWeight: -1\n")).toThrow(/commentWeight/);
+    });
+});
+
+describe("mergeConfig - commentWeight", () => {
+    it("uses the user's commentWeight when provided", () => {
+        const merged = mergeConfig({exclude: [], weights: [], commentWeight: 0.4});
+        expect(merged.commentWeight).toBe(0.4);
+    });
+
+    it("falls back to the default commentWeight when not provided", () => {
+        const merged = mergeConfig({exclude: [], weights: []});
+        expect(merged.commentWeight).toBe(DEFAULT_CONFIG.commentWeight);
+    });
+});
+
+describe("DEFAULT_CONFIG - commentWeight", () => {
+    it("defaults commentWeight to 0.3", () => {
+        expect(DEFAULT_CONFIG.commentWeight).toBe(0.3);
+    });
+});
+
 describe("loadConfig", () => {
     let dir: string;
 
