@@ -78,6 +78,8 @@ With no range argument it prices the working-tree diff. The CLI and the GitHub A
   quality.
 - PRs that touch an outlier number of files also get an informational note about the added review context —
   this never changes the minutes range or the tier.
+- Comment-only lines within a change are also down-weighted, for the same reason test files are —
+  reviewed, but faster per line than core logic — configurable in `.proquo.yml`.
 
 ## Configuration
 
@@ -91,6 +93,8 @@ exclude:
 weights:
   - pattern: "**/e2e/**"
     weight: 0.3
+
+commentWeight: 0.3
 ```
 
 - `exclude`: extra glob patterns added to the built-in defaults (lockfiles, `node_modules`, `vendor`,
@@ -100,6 +104,11 @@ weights:
   before the built-ins, so a rule here overrides a default for the same file. Defaults already down-weight
   test files (`*.test.*`, `*.spec.*`, `test/`, `tests/`, `spec/`, `__tests__/`) at 0.5 — tests are still
   reviewed, just faster per line than core logic. Any file not matched by a pattern keeps a weight of 1.
+- `commentWeight`: the weight applied to comment-only lines within a changed file, on top of that
+  file's own weight (so a comment inside an already down-weighted test file counts even less).
+  Defaults to `0.3`. Only applied when line-level diff content is available, the file's language
+  is recognized, and the patch data is complete; otherwise the file's ordinary per-file weight is
+  used, unchanged.
 
 ## Research
 
@@ -123,6 +132,13 @@ from it — the exact numbers live in the code, not here, so this section can't 
   2015) — found that the proportion of useful review comments declines as a change touches more files, a
   direction-only finding with no reported magnitude or functional form, from a single company's internal
   tooling.
+- Abdelsalam, Peitek, Bergum & Apel, "The Effect of Comments on Program Comprehension: An Eye-Tracking Study"
+  (2025, eye-tracking study on how developers visually attend to comments vs. code) and
+  Brysbaert, "How Many Words Do We Read per Minute?" (2019, reading-rate meta-analysis) — neither
+  study measures comment down-weighting during code review directly. Combined, they bound a
+  derived, triangulated estimate (roughly 0.05-0.29 from reading-rate ratios, up to ~0.5 from the
+  eye-tracking attention ratio) that ProQuo's `commentWeight` default of `0.3` sits inside — a
+  reasoned estimate, not a measured one.
 - Sadowski et al., "Modern Code Review: A Case Study at Google" (ICSE-SEIP 2018) — found that the large
   majority of code changes touch only a handful of files, a distribution later independently confirmed on
   ordinary GitHub pull requests, which is what makes a change touching many files a genuine outlier rather
