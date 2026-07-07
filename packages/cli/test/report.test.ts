@@ -63,6 +63,15 @@ describe("renderReport", () => {
         expect(out).not.toContain("Spread across many files");
     });
 
+    it("omits the file-spread note for a zero-effective-line diff even above the threshold", () => {
+        const out = renderReport(
+            {effectiveLines: 0, excludedLines: 0, excludedFiles: 0, pricedFiles: 12},
+            {lowerMinutes: 0, upperMinutes: 0, tier: "green", sessionFlag: false, splitNudge: false},
+        );
+        expect(out).toContain("negligible");
+        expect(out).not.toContain("Spread across many files");
+    });
+
     it("does not change the displayed price range based on file count", () => {
         const fewFiles = renderReport({effectiveLines: 312, excludedLines: 0, excludedFiles: 0, pricedFiles: 2}, yellowPrice);
         const manyFiles = renderReport({effectiveLines: 312, excludedLines: 0, excludedFiles: 0, pricedFiles: 40}, yellowPrice);

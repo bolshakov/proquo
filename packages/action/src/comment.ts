@@ -121,7 +121,7 @@ export function renderComment(size: SizeResult, price: Price, previousPrice?: Pr
         );
     }
 
-    const spreadNote = fileSpreadNote(size.pricedFiles);
+    const spreadNote = size.effectiveLines === 0 ? null : fileSpreadNote(size.pricedFiles);
     if (spreadNote) {
         lines.push("", spreadNote);
     }

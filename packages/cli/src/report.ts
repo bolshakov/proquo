@@ -78,7 +78,7 @@ export function renderReport(size: SizeResult, price: Price): string {
         );
     }
 
-    const spreadNote = fileSpreadNote(size.pricedFiles);
+    const spreadNote = size.effectiveLines === 0 ? null : fileSpreadNote(size.pricedFiles);
     if (spreadNote) {
         lines.push(spreadNote);
     }

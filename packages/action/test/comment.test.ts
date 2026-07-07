@@ -164,6 +164,15 @@ describe("renderComment", () => {
         expect(body).not.toContain("Spread across many files");
     });
 
+    it("omits the file-spread note for a zero-effective-line diff even above the threshold", () => {
+        const body = renderComment(
+            {effectiveLines: 0, excludedLines: 0, excludedFiles: 0, pricedFiles: 12},
+            {lowerMinutes: 0, upperMinutes: 0, tier: "green", sessionFlag: false, splitNudge: false},
+        );
+        expect(body).toContain("no effective source changes");
+        expect(body).not.toContain("Spread across many files");
+    });
+
     it("shows the file-spread note regardless of tier", () => {
         const redBody = renderComment({effectiveLines: 800, excludedLines: 0, excludedFiles: 0, pricedFiles: 15}, redPrice);
         expect(redBody).toContain("Spread across many files");
