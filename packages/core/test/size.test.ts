@@ -70,4 +70,47 @@ describe("effectiveSize", () => {
         expect(result.pricedFiles).toBe(3);
         expect(result.excludedFiles).toBe(1);
     });
+
+    it("down-weights comment-only lines using the per-line patch when available", () => {
+        const patch = ["@@ -1,2 +1,2 @@", "+// a comment", "+const x = 1;"].join("\n");
+        const result = effectiveSize(
+            [{filename: "src/a.ts", additions: 2, deletions: 0, patch}],
+            DEFAULT_CONFIG,
+        );
+        // 1 comment line * 0.3 + 1 code line * 1 = 1.3 -> rounds to 1
+        expect(result.effectiveLines).toBe(1);
+    });
+
+    it("falls back to the per-file weight when no patch is available", () => {
+        const result = effectiveSize([{filename: "src/a.ts", additions: 2, deletions: 0}], DEFAULT_CONFIG);
+        expect(result.effectiveLines).toBe(2);
+    });
+
+    it("falls back to the per-file weight when the language is unrecognized", () => {
+        const patch = ["@@ -1,1 +1,1 @@", "+# not a real config"].join("\n");
+        const result = effectiveSize(
+            [{filename: "Dockerfile", additions: 1, deletions: 0, patch}],
+            DEFAULT_CONFIG,
+        );
+        expect(result.effectiveLines).toBe(1);
+    });
+
+    it("falls back to the per-file weight when the patch line count doesn't match additions+deletions (e.g. a truncated GitHub patch)", () => {
+        const patch = ["@@ -1,1 +1,1 @@", "+// only one line visible"].join("\n");
+        const result = effectiveSize(
+            [{filename: "src/a.ts", additions: 5, deletions: 0, patch}],
+            DEFAULT_CONFIG,
+        );
+        expect(result.effectiveLines).toBe(5);
+    });
+
+    it("multiplies the file weight and the comment weight for a comment line in an already down-weighted file", () => {
+        const patch = ["@@ -1,1 +1,1 @@", "+// a comment in a test file"].join("\n");
+        const result = effectiveSize(
+            [{filename: "src/a.test.ts", additions: 1, deletions: 0, patch}],
+            DEFAULT_CONFIG,
+        );
+        // 1 line * 0.5 (test-file weight) * 0.3 (comment weight) = 0.15 -> rounds to 0
+        expect(result.effectiveLines).toBe(0);
+    });
 });
