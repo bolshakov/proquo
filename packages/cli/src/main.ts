@@ -7,7 +7,7 @@ function gitNumstat(range: string | undefined): string {
     return execFileSync("git", args, {encoding: "utf8"});
 }
 
-export function main(): void {
+function main(): void {
     run({
         gitNumstat,
         cwd: process.cwd(),
@@ -16,7 +16,4 @@ export function main(): void {
     });
 }
 
-// @ts-expect-error: import.meta is ESM-only, but esbuild emits this as ESM
-if (import.meta.url === `file://${process.argv[1]}`) {
-    main();
-}
+main();
