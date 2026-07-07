@@ -8,8 +8,7 @@ const FILE_SPREAD_THRESHOLD = 10;
 
 const FILE_SPREAD_NOTE =
     "Spread across many files. This PR changes {fileCount} files — more than about 9 in 10 PRs touch. Each " +
-    "extra file is another piece of context a reviewer has to load and hold at once, so a change spread this " +
-    "wide is harder to review even when it isn't especially large.";
+    "extra file is another piece of context a reviewer has to load and hold at once.";
 
 const FOOTNOTE_BASE =
     "These minutes are what careful defect-finding costs at 200–500 lines/hour — the rate review studies " +
