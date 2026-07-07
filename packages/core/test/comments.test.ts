@@ -128,4 +128,43 @@ describe("classifyPatchLines", () => {
             {type: "add", isComment: true},
         ]);
     });
+
+    it("does not leak an unresolved block comment from one hunk into a later hunk", () => {
+        const patch = patchOf(
+            "@@ -1,2 +1,2 @@",
+            "+/* an unterminated comment carried by this hunk alone",
+            "+still inside, per this hunk",
+            "@@ -10,1 +10,1 @@",
+            "+const x = 1;",
+        );
+        expect(classifyPatchLines(patch, "typescript")).toEqual([
+            {type: "add", isComment: null},
+            {type: "add", isComment: null},
+            {type: "add", isComment: false},
+        ]);
+    });
+
+    it("does not corrupt classification of later lines when an earlier line falsely opens a block comment", () => {
+        const patch = patchOf("@@ -1,2 +1,2 @@", "+const pattern = /a\\/*b/;", "+const y = 2;");
+        expect(classifyPatchLines(patch, "typescript")).toEqual([
+            {type: "add", isComment: null},
+            {type: "add", isComment: null},
+        ]);
+    });
+
+    it("does not corrupt classification of a later comment when an unpaired quote leaves a string unresolved", () => {
+        const patch = patchOf("@@ -1,2 +1,2 @@", "+const r = /'/;", "+// this is a real comment");
+        expect(classifyPatchLines(patch, "typescript")).toEqual([
+            {type: "add", isComment: null},
+            {type: "add", isComment: null},
+        ]);
+    });
+
+    it("keeps a YAML single-quoted string ending in a backslash from swallowing the next line's comment", () => {
+        const patch = patchOf("@@ -1,2 +1,2 @@", "+path: 'C:\\'", "+# a real comment");
+        expect(classifyPatchLines(patch, "yaml")).toEqual([
+            {type: "add", isComment: false},
+            {type: "add", isComment: true},
+        ]);
+    });
 });

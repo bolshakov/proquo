@@ -7,27 +7,37 @@ describe("parseHunkLines", () => {
             "\n",
         );
         expect(parseHunkLines(patch)).toEqual([
-            {type: "context", content: "unchanged line"},
-            {type: "del", content: "old line"},
-            {type: "add", content: "new line"},
-            {type: "add", content: "another new line"},
+            {type: "context", content: "unchanged line", hunkIndex: 0},
+            {type: "del", content: "old line", hunkIndex: 0},
+            {type: "add", content: "new line", hunkIndex: 0},
+            {type: "add", content: "another new line", hunkIndex: 0},
         ]);
     });
 
     it("ignores hunk headers and file-header lines", () => {
         const patch = ["--- a/file.ts", "+++ b/file.ts", "@@ -1,1 +1,1 @@", "+added"].join("\n");
-        expect(parseHunkLines(patch)).toEqual([{type: "add", content: "added"}]);
+        expect(parseHunkLines(patch)).toEqual([{type: "add", content: "added", hunkIndex: 0}]);
     });
 
     it("handles multiple hunks in one patch", () => {
         const patch = ["@@ -1,1 +1,1 @@", "+first", "@@ -10,1 +10,1 @@", "+second"].join("\n");
         expect(parseHunkLines(patch)).toEqual([
-            {type: "add", content: "first"},
-            {type: "add", content: "second"},
+            {type: "add", content: "first", hunkIndex: 0},
+            {type: "add", content: "second", hunkIndex: 1},
         ]);
     });
 
     it("returns an empty array for an empty patch", () => {
         expect(parseHunkLines("")).toEqual([]);
+    });
+
+    it("records an added line whose content starts with ++ instead of dropping it as a header", () => {
+        const patch = ["@@ -1,1 +1,1 @@", "+++i;"].join("\n");
+        expect(parseHunkLines(patch)).toEqual([{type: "add", content: "++i;", hunkIndex: 0}]);
+    });
+
+    it("records a deleted line whose content starts with -- instead of dropping it as a header", () => {
+        const patch = ["@@ -1,1 +1,1 @@", "----"].join("\n");
+        expect(parseHunkLines(patch)).toEqual([{type: "del", content: "---", hunkIndex: 0}]);
     });
 });
