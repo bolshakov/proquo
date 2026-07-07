@@ -10,6 +10,7 @@ export interface WeightRule {
 export interface ProquoConfig {
     exclude: string[];
     weights: WeightRule[];
+    commentWeight: number;
 }
 
 const DEFAULT_EXCLUDE = [
@@ -51,14 +52,18 @@ const DEFAULT_WEIGHTS: WeightRule[] = [
     {pattern: "**/__tests__/**", weight: DEFAULT_TEST_WEIGHT},
 ];
 
+const DEFAULT_COMMENT_WEIGHT = 0.3;
+
 export const DEFAULT_CONFIG: ProquoConfig = Object.freeze({
     exclude: Object.freeze(DEFAULT_EXCLUDE),
     weights: Object.freeze(DEFAULT_WEIGHTS),
+    commentWeight: DEFAULT_COMMENT_WEIGHT,
 }) as ProquoConfig;
 
 interface RawConfig {
     exclude?: unknown;
     weights?: unknown;
+    commentWeight?: unknown;
 }
 
 function validateExclude(raw: unknown): string[] {
@@ -90,18 +95,32 @@ function validateWeights(raw: unknown): WeightRule[] {
     });
 }
 
-export function parseConfigFile(raw: string): {exclude: string[]; weights: WeightRule[]} {
+function validateCommentWeight(raw: unknown): number | undefined {
+    if (raw === undefined) return undefined;
+    if (!Number.isFinite(raw) || (raw as number) < 0) {
+        throw new Error(".proquo.yml: `commentWeight` must be a non-negative number");
+    }
+    return raw as number;
+}
+
+export function parseConfigFile(raw: string): {exclude: string[]; weights: WeightRule[]; commentWeight?: number} {
     const parsed = (parse(raw) ?? {}) as RawConfig;
     return {
         exclude: validateExclude(parsed.exclude),
         weights: validateWeights(parsed.weights),
+        commentWeight: validateCommentWeight(parsed.commentWeight),
     };
 }
 
-export function mergeConfig(userConfig: {exclude: string[]; weights: WeightRule[]}): ProquoConfig {
+export function mergeConfig(userConfig: {
+    exclude: string[];
+    weights: WeightRule[];
+    commentWeight?: number;
+}): ProquoConfig {
     return {
         exclude: [...DEFAULT_CONFIG.exclude, ...userConfig.exclude],
         weights: [...userConfig.weights, ...DEFAULT_CONFIG.weights],
+        commentWeight: userConfig.commentWeight ?? DEFAULT_CONFIG.commentWeight,
     };
 }
 

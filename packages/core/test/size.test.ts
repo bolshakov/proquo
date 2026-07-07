@@ -50,6 +50,7 @@ describe("effectiveSize", () => {
         const config: ProquoConfig = {
             exclude: DEFAULT_CONFIG.exclude,
             weights: [{pattern: "**/*.md", weight: 0.3}],
+            commentWeight: DEFAULT_CONFIG.commentWeight,
         };
         const result = effectiveSize([{filename: "README.md", additions: 5, deletions: 0}], config);
         // 5 * 0.3 = 1.5 -> rounds to 2
