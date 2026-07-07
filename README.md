@@ -99,6 +99,24 @@ weights:
   test files (`*.test.*`, `*.spec.*`, `test/`, `tests/`, `spec/`, `__tests__/`) at 0.5 — tests are still
   reviewed, just faster per line than core logic. Any file not matched by a pattern keeps a weight of 1.
 
+## Research
+
+Published research backs why ProQuo prices by size and rate at all, not just the general instinct that
+smaller PRs are easier to review.
+
+- Cohen, Teleki & Brown, "Code Review at Cisco Systems," in *Best Kept Secrets of Peer Code Review*
+  (SmartBear Software, 2006) — a vendor-published field study of 2,500 reviews across 3.2 million lines
+  of code at Cisco, not a peer-reviewed paper. It found that defect detection falls once a review grows
+  past a certain size, that reviewing too fast lowers the fraction of defects caught, and that a review
+  session has a point past which attention degrades.
+- The older, separate tradition of formal Fagan-style code inspections (e.g. Basili & Pericone; Russell,
+  as summarized in McConnell's *Code Complete*) independently established that inspection rate strongly
+  affects defects found per line — a second, earlier line of evidence pointing the same direction as the
+  Cisco study.
+
+ProQuo's specific size band, rate range, and session length are tuned from this literature, not copied
+from it — the exact numbers live in the code, not here, so this section can't drift out of sync with it.
+
 ## Development
 
 ```bash
