@@ -1,37 +1,14 @@
 import type {Price, SizeResult} from "@proquo/core";
+import {fileSpreadNote as coreFileSpreadNote, footnoteParts, formatNumber, formatRange, SPLIT_NUDGE_BODY, SPLIT_NUDGE_LEAD} from "@proquo/core";
 
-const SPLIT_NUDGE =
-    "Worth splitting? Breaking this into ≤200-line PRs puts each piece back in the size band where reviewers " +
-    "catch the most defects per line. The split buys detection quality, not saved review minutes.";
-
-const FILE_SPREAD_THRESHOLD = 10;
-
-const FILE_SPREAD_NOTE =
-    "Spread across many files. This PR changes {fileCount} files — more than about 9 in 10 PRs touch. Each " +
-    "extra file is another piece of context a reviewer has to load and hold at once.";
-
-const FOOTNOTE_BASE =
-    "These minutes are what careful defect-finding costs at 200–500 lines/hour — the rate review studies " +
-    'report, not how long a skim takes. "Effective lines" already exclude generated files and lockfiles. ' +
-    "Treat the rates and the 200/400 thresholds as guardrails, not laws.";
-
-const SESSION_NOTE =
-    "This estimate's upper bound also runs longer than the ~60-minute session after which reviewer attention " +
-    "is known to fade — plan for a break or a second sitting.";
-
-function formatNumber(n: number): string {
-    return n.toLocaleString("en-US");
-}
-
-function fileSpreadNote(pricedFiles: number): string | null {
-    if (pricedFiles < FILE_SPREAD_THRESHOLD) return null;
-    return FILE_SPREAD_NOTE.replace("{fileCount}", formatNumber(pricedFiles));
+function fileSpreadNote(effectiveLines: number, pricedFiles: number): string | null {
+    const note = coreFileSpreadNote(effectiveLines, pricedFiles);
+    return note ? `${note.lead} ${note.body}` : null;
 }
 
 function tierLine(effectiveLines: number, price: Price): string {
     const n = formatNumber(effectiveLines);
-    const rangeBounds = price.lowerMinutes === price.upperMinutes ? price.lowerMinutes : `${price.lowerMinutes}–${price.upperMinutes}`;
-    const range = `${rangeBounds} min`;
+    const range = formatRange(price.lowerMinutes, price.upperMinutes);
 
     switch (price.tier) {
         case "green":
@@ -56,9 +33,7 @@ function tierLine(effectiveLines: number, price: Price): string {
 }
 
 function footnote(price: Price): string {
-    const parts = [FOOTNOTE_BASE];
-    if (price.tier === "yellow" && price.sessionFlag) parts.push(SESSION_NOTE);
-    return parts.join(" ");
+    return footnoteParts(price).join(" ");
 }
 
 export function renderReport(size: SizeResult, price: Price): string {
@@ -77,13 +52,13 @@ export function renderReport(size: SizeResult, price: Price): string {
         );
     }
 
-    const spreadNote = size.effectiveLines === 0 ? null : fileSpreadNote(size.pricedFiles);
+    const spreadNote = fileSpreadNote(size.effectiveLines, size.pricedFiles);
     if (spreadNote) {
         lines.push(spreadNote);
     }
 
     if (price.splitNudge) {
-        lines.push(SPLIT_NUDGE);
+        lines.push(`${SPLIT_NUDGE_LEAD} ${SPLIT_NUDGE_BODY}`);
     }
 
     lines.push(footnote(price));
