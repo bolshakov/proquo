@@ -12,6 +12,8 @@ describe("languageFor", () => {
         expect(languageFor("lib.rs")).toBe("rust");
         expect(languageFor("script.py")).toBe("python");
         expect(languageFor("script.rb")).toBe("ruby");
+        expect(languageFor("sig/script.rbs")).toBe("ruby");
+        expect(languageFor("sorbet/script.rbi")).toBe("ruby");
         expect(languageFor("app.c")).toBe("c");
         expect(languageFor("app.cpp")).toBe("cpp");
         expect(languageFor("config.yml")).toBe("yaml");

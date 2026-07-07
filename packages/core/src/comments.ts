@@ -82,6 +82,8 @@ const EXTENSION_TO_LANGUAGE: Record<string, SupportedLanguage> = {
     ".tsx": "tsx",
     ".py": "python",
     ".rb": "ruby",
+    ".rbs": "ruby",
+    ".rbi": "ruby",
     ".go": "go",
     ".java": "java",
     ".c": "c",
