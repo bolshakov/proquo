@@ -1,7 +1,31 @@
 # 🏷️ ProQuo
 
+[![CI](https://github.com/bolshakov/proquo/actions/workflows/ci.yml/badge.svg)](https://github.com/bolshakov/proquo/actions/workflows/ci.yml)
+[![Marketplace](https://img.shields.io/badge/marketplace-ProQuo-blue?logo=github)](https://github.com/marketplace/actions/proquo-review-price-tag)
+[![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
+
 A GitHub Action that comments the estimated review burden of every pull request, in minutes of focused reviewer
 attention.
+
+## What it looks like
+
+An example comment for a 133-effective-line PR (note, the message could drift slightly):
+
+> ### Review price tag
+>
+> 🟢 **133 effective lines** — about **16–40 min** (down from 24–60 min) of focused review (based on 200–500
+> lines/hour). This is within the range where reviewers find the most issues per line, and small changes usually
+> receive feedback the fastest.
+>
+> 142 lines across 1 generated/lockfile file were excluded from the price.
+>
+> <details><summary>Why these numbers?</summary>
+>
+> These minutes are what careful defect-finding costs at 200–500 lines/hour — the rate review studies report, not
+> how long a skim takes. "Effective lines" already exclude generated files and lockfiles. Treat the rates and the
+> 200/400 thresholds as guardrails, not laws.
+>
+> </details>
 
 ## Why
 
