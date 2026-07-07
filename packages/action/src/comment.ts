@@ -1,67 +1,33 @@
 import type {Price} from "@proquo/core";
 import type {SizeResult} from "@proquo/core";
+import {
+    computeDelta,
+    fileSpreadNote as coreFileSpreadNote,
+    footnoteParts,
+    formatNumber,
+    formatRange,
+    SPLIT_NUDGE_BODY,
+    SPLIT_NUDGE_LEAD,
+    tierTail,
+    type PreviousPrice,
+} from "@proquo/core";
 
 export const MARKER = "<!-- review-economy:price-tag -->";
 
-const SPLIT_NUDGE =
-    "**Worth splitting?** Breaking this into ≤200-line PRs puts each piece back in the size band where " +
-    "reviewers catch the most defects per line. The split buys detection quality, not saved review minutes.";
-
-const FILE_SPREAD_THRESHOLD = 10;
-
-const FILE_SPREAD_NOTE =
-    "**Spread across many files.** This PR changes {fileCount} files — more than about 9 in 10 PRs touch. " +
-    "Each extra file is another piece of context a reviewer has to load and hold at once.";
-
-const FOOTNOTE_BASE =
-    "These minutes are what careful defect-finding costs at 200–500 lines/hour — the rate review studies " +
-    'report, not how long a skim takes. "Effective lines" already exclude generated files and lockfiles. ' +
-    "Treat the rates and the 200/400 thresholds as guardrails, not laws.";
-
-const SESSION_NOTE =
-    "This estimate's upper bound also runs longer than the ~60-minute session after which reviewer attention " +
-    "is known to fade — plan for a break or a second sitting.";
-
-function formatNumber(n: number): string {
-    return n.toLocaleString("en-US");
+function fileSpreadNote(effectiveLines: number, pricedFiles: number): string | null {
+    const note = coreFileSpreadNote(effectiveLines, pricedFiles);
+    return note ? `**${note.lead}** ${note.body}` : null;
 }
 
-function fileSpreadNote(pricedFiles: number): string | null {
-    if (pricedFiles < FILE_SPREAD_THRESHOLD) return null;
-    return FILE_SPREAD_NOTE.replace("{fileCount}", formatNumber(pricedFiles));
-}
-
-function formatRange(lowerMinutes: number, upperMinutes: number): string {
-    return lowerMinutes === upperMinutes ? `${lowerMinutes} min` : `${lowerMinutes}–${upperMinutes} min`;
-}
+const TIER_EMOJI = {green: "🟢", yellow: "🟡", red: "🔴"} as const;
 
 function tierLine(effectiveLines: number, price: Price, deltaClause: string): string {
     const n = formatNumber(effectiveLines);
     const range = `**${formatRange(price.lowerMinutes, price.upperMinutes)}**${deltaClause}`;
-
-    switch (price.tier) {
-        case "green":
-            return (
-                `🟢 **${n} effective lines** — about ${range} of focused review ` +
-                "(based on 200–500 lines/hour). This is within the range where reviewers find the most issues per line, " +
-                "and small changes usually receive feedback the fastest."
-            );
-        case "yellow":
-            return (
-                `🟡 **${n} effective lines** — about ${range} of focused review. Beyond ~200 lines, reviewers tend ` +
-                "to find fewer issues per line, and 400 lines is the upper limit recommended by the largest "  +
-                "industry study on code reviews."
-            );
-        case "red":
-            return (
-                `🔴 **${n} effective lines** — about ${range} of focused review, more than comfortably fits ` +
-                "in a single review session. Beyond 400 lines, review effectiveness drops and reviewers tend " +
-                "to leave fewer useful comments per line."
-            )
-    }
+    return `${TIER_EMOJI[price.tier]} **${n} effective lines** — about ${range} of focused review${tierTail(price.tier)}`;
 }
 
-export type PreviousPrice = Pick<Price, "lowerMinutes" | "upperMinutes">;
+export type {PreviousPrice};
 
 const PRICE_DATA_MARKER = "review-economy:price-data";
 const PRICE_DATA_PATTERN = new RegExp(`<!-- ${PRICE_DATA_MARKER} (.*?) -->`);
@@ -83,22 +49,14 @@ export function parsePreviousPrice(body: string): PreviousPrice | null {
     }
 }
 
-const DELTA_THRESHOLD = 0.01;
-
 function deltaClause(price: Price, previous: PreviousPrice): string {
-    const currentAvg = (price.lowerMinutes + price.upperMinutes) / 2;
-    const previousAvg = (previous.lowerMinutes + previous.upperMinutes) / 2;
-    if (currentAvg === previousAvg) return "";
-    if (previousAvg > 0 && Math.abs(currentAvg - previousAvg) / previousAvg <= DELTA_THRESHOLD) return "";
-
-    const direction = currentAvg < previousAvg ? "down" : "up";
-    return ` (${direction} from ${formatRange(previous.lowerMinutes, previous.upperMinutes)})`;
+    const delta = computeDelta(price, previous);
+    if (!delta) return "";
+    return ` (${delta.direction} from ${formatRange(delta.previous.lowerMinutes, delta.previous.upperMinutes)})`;
 }
 
 function footnote(price: Price): string {
-    const parts = [FOOTNOTE_BASE];
-    if (price.tier === "yellow" && price.sessionFlag) parts.push(SESSION_NOTE);
-    const body = parts.join("\n\n");
+    const body = footnoteParts(price).join("\n\n");
     return `<details>\n<summary>Why these numbers?</summary>\n\n${body}\n\n</details>`;
 }
 
@@ -120,13 +78,13 @@ export function renderComment(size: SizeResult, price: Price, previousPrice?: Pr
         );
     }
 
-    const spreadNote = size.effectiveLines === 0 ? null : fileSpreadNote(size.pricedFiles);
+    const spreadNote = fileSpreadNote(size.effectiveLines, size.pricedFiles);
     if (spreadNote) {
         lines.push("", spreadNote);
     }
 
     if (price.splitNudge) {
-        lines.push("", SPLIT_NUDGE);
+        lines.push("", `**${SPLIT_NUDGE_LEAD}** ${SPLIT_NUDGE_BODY}`);
     }
 
     lines.push("", footnote(price));

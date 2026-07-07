@@ -13,6 +13,24 @@ describe("renderReport", () => {
         expect(out).toContain("12–30 min");
     });
 
+    it("uses the same tier-zone wording as the action for green", () => {
+        const out = renderReport({effectiveLines: 100, excludedLines: 0, excludedFiles: 0, pricedFiles: 1}, greenPrice);
+        expect(out).toContain("This is within the range where reviewers find the most issues per line");
+        expect(out).not.toContain("evidence-based rates");
+    });
+
+    it("uses the same tier-zone wording as the action for yellow", () => {
+        const out = renderReport({effectiveLines: 321, excludedLines: 0, excludedFiles: 0, pricedFiles: 3}, yellowPrice);
+        expect(out).toContain("Beyond ~200 lines, reviewers tend to find fewer issues per line");
+        expect(out).not.toContain("start to drop");
+    });
+
+    it("uses the same tier-zone wording as the action for red", () => {
+        const out = renderReport({effectiveLines: 800, excludedLines: 0, excludedFiles: 0, pricedFiles: 3}, redPrice);
+        expect(out).toContain("more than comfortably fits in a single review session");
+        expect(out).not.toContain("more than fits one effective session");
+    });
+
     it("reports no-range estimate when range bounds are equal", () => {
         const price = {lowerMinutes: 5, upperMinutes: 5, tier: "green", sessionFlag: false, splitNudge: false}
         const out = renderReport({effectiveLines: 100, excludedLines: 0, excludedFiles: 0, pricedFiles: 1}, price);

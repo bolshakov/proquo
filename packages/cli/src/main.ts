@@ -1,7 +1,5 @@
 import {execFileSync} from "node:child_process";
-import {effectiveSize, loadConfig, price} from "@proquo/core";
-import {parseNumstat} from "./diff";
-import {renderReport} from "./report";
+import {run} from "./run";
 
 function gitNumstat(range: string | undefined): string {
     const args = ["diff", "--numstat"];
@@ -10,11 +8,12 @@ function gitNumstat(range: string | undefined): string {
 }
 
 function main(): void {
-    const range = process.argv[2];
-    const config = loadConfig(process.cwd());
-    const files = parseNumstat(gitNumstat(range));
-    const size = effectiveSize(files, config);
-    process.stdout.write(renderReport(size, price(size.effectiveLines)) + "\n");
+    run({
+        gitNumstat,
+        cwd: process.cwd(),
+        range: process.argv[2],
+        stdout: (text) => process.stdout.write(text),
+    });
 }
 
 main();
