@@ -28,7 +28,7 @@ function weightedLinesFor(file: PrFile, fileWeight: number, config: ProquoConfig
     }
 
     return classified.reduce(
-        (sum, line) => sum + fileWeight * (line.isComment ? config.commentWeight : 1),
+        (sum, line) => sum + fileWeight * (line.isComment === true ? config.commentWeight : 1),
         0,
     );
 }

@@ -113,4 +113,11 @@ describe("effectiveSize", () => {
         // 1 line * 0.5 (test-file weight) * 0.3 (comment weight) = 0.15 -> rounds to 0
         expect(result.effectiveLines).toBe(0);
     });
+
+    it("falls back to the per-file weight for a hunk where a block comment never closes", () => {
+        const patch = ["@@ -1,2 +1,2 @@", "+const pattern = /a\\/*b/;", "+const y = 2;"].join("\n");
+        const result = effectiveSize([{filename: "src/a.ts", additions: 2, deletions: 0, patch}], DEFAULT_CONFIG);
+        // both lines fall back to weight 1 (untrustworthy hunk), not the comment weight
+        expect(result.effectiveLines).toBe(2);
+    });
 });
