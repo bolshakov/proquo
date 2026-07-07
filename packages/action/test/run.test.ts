@@ -27,7 +27,7 @@ describe("run", () => {
 
     it("updates the existing sticky comment and shows the delta since the previous price", async () => {
         const oldBody = renderComment(
-            {effectiveLines: 900, excludedLines: 0, excludedFiles: 0},
+            {effectiveLines: 900, excludedLines: 0, excludedFiles: 0, pricedFiles: 5},
             {lowerMinutes: 108, upperMinutes: 270, tier: "red", sessionFlag: true, splitNudge: true},
         );
         const comments = {

@@ -2,7 +2,7 @@ import {describe, expect, it} from "vitest";
 import {MARKER, parsePreviousPrice, renderComment} from "../src/comment";
 import type {Price} from "@proquo/core";
 
-const size = {effectiveLines: 312, excludedLines: 1204, excludedFiles: 2};
+const size = {effectiveLines: 312, excludedLines: 1204, excludedFiles: 2, pricedFiles: 5};
 
 const greenPrice: Price = {lowerMinutes: 6, upperMinutes: 15, tier: "green", sessionFlag: false, splitNudge: false};
 const yellowPrice: Price = {lowerMinutes: 39, upperMinutes: 96, tier: "yellow", sessionFlag: true, splitNudge: false};
@@ -21,7 +21,7 @@ describe("renderComment", () => {
     });
 
     it("renders the green zone with the evidence-based range", () => {
-        const body = renderComment({effectiveLines: 50, excludedLines: 0, excludedFiles: 0}, greenPrice);
+        const body = renderComment({effectiveLines: 50, excludedLines: 0, excludedFiles: 0, pricedFiles: 1}, greenPrice);
         expect(body).toContain("🟢 **50 effective lines**");
         expect(body).toContain("**6–15 min**");
         expect(body).toContain("This is within the range where reviewers find the most issues per line");
@@ -29,7 +29,7 @@ describe("renderComment", () => {
 
     it("renders no-range estimate when range bounds are equal", () => {
         const price = {lowerMinutes: 5, upperMinutes: 5, tier: "green", sessionFlag: false, splitNudge: false}
-        const body = renderComment({effectiveLines: 50, excludedLines: 0, excludedFiles: 0}, price);
+        const body = renderComment({effectiveLines: 50, excludedLines: 0, excludedFiles: 0, pricedFiles: 1}, price);
         expect(body).toContain("**5 min**");
     })
 
@@ -49,7 +49,7 @@ describe("renderComment", () => {
     });
 
     it("renders the red zone with the split nudge and no saved-minutes arithmetic", () => {
-        const body = renderComment({effectiveLines: 800, excludedLines: 0, excludedFiles: 0}, redPrice);
+        const body = renderComment({effectiveLines: 800, excludedLines: 0, excludedFiles: 0, pricedFiles: 3}, redPrice);
         expect(body).toContain("🔴 **800 effective lines**");
         expect(body).toContain("**96–240 min**");
         expect(body).toContain("Worth splitting?");
@@ -93,13 +93,13 @@ describe("renderComment", () => {
     });
 
     it("omits the exclusion line when nothing was excluded", () => {
-        const body = renderComment({effectiveLines: 50, excludedLines: 0, excludedFiles: 0}, greenPrice);
+        const body = renderComment({effectiveLines: 50, excludedLines: 0, excludedFiles: 0, pricedFiles: 1}, greenPrice);
         expect(body).not.toContain("excluded");
     });
 
     it("handles an effectively empty diff", () => {
         const body = renderComment(
-            {effectiveLines: 0, excludedLines: 900, excludedFiles: 1},
+            {effectiveLines: 0, excludedLines: 900, excludedFiles: 1, pricedFiles: 0},
             {lowerMinutes: 0, upperMinutes: 0, tier: "green", sessionFlag: false, splitNudge: false},
         );
         expect(body).toContain("no effective source changes");
@@ -119,7 +119,7 @@ describe("renderComment", () => {
     it("places the delta clause inline right after the current range", () => {
         const price: Price = {lowerMinutes: 20, upperMinutes: 50, tier: "yellow", sessionFlag: false, splitNudge: false};
         const body = renderComment(
-            {effectiveLines: 167, excludedLines: 0, excludedFiles: 0},
+            {effectiveLines: 167, excludedLines: 0, excludedFiles: 0, pricedFiles: 2},
             price,
             {lowerMinutes: 23, upperMinutes: 57},
         );
@@ -145,11 +145,47 @@ describe("renderComment", () => {
 
     it("omits the delta line for an effectively empty diff even with a previous price", () => {
         const body = renderComment(
-            {effectiveLines: 0, excludedLines: 0, excludedFiles: 0},
+            {effectiveLines: 0, excludedLines: 0, excludedFiles: 0, pricedFiles: 0},
             {lowerMinutes: 0, upperMinutes: 0, tier: "green", sessionFlag: false, splitNudge: false},
             {lowerMinutes: 40, upperMinutes: 66},
         );
         expect(body).not.toMatch(/(down|up) from/);
+    });
+
+    it("adds the file-spread note when priced files reach the threshold", () => {
+        const body = renderComment({effectiveLines: 120, excludedLines: 0, excludedFiles: 0, pricedFiles: 10}, greenPrice);
+        expect(body).toContain("**Spread across many files.**");
+        expect(body).toContain("This PR changes 10 files");
+        expect(body).toContain("more than about 9 in 10 PRs touch");
+    });
+
+    it("omits the file-spread note just below the threshold", () => {
+        const body = renderComment({effectiveLines: 120, excludedLines: 0, excludedFiles: 0, pricedFiles: 9}, greenPrice);
+        expect(body).not.toContain("Spread across many files");
+    });
+
+    it("omits the file-spread note for a zero-effective-line diff even above the threshold", () => {
+        const body = renderComment(
+            {effectiveLines: 0, excludedLines: 0, excludedFiles: 0, pricedFiles: 12},
+            {lowerMinutes: 0, upperMinutes: 0, tier: "green", sessionFlag: false, splitNudge: false},
+        );
+        expect(body).toContain("no effective source changes");
+        expect(body).not.toContain("Spread across many files");
+    });
+
+    it("shows the file-spread note regardless of tier", () => {
+        const redBody = renderComment({effectiveLines: 800, excludedLines: 0, excludedFiles: 0, pricedFiles: 15}, redPrice);
+        expect(redBody).toContain("Spread across many files");
+
+        const yellowBody = renderComment({effectiveLines: 312, excludedLines: 0, excludedFiles: 0, pricedFiles: 15}, yellowPrice);
+        expect(yellowBody).toContain("Spread across many files");
+    });
+
+    it("does not change the displayed price range based on file count", () => {
+        const fewFiles = renderComment({effectiveLines: 312, excludedLines: 0, excludedFiles: 0, pricedFiles: 2}, yellowPrice);
+        const manyFiles = renderComment({effectiveLines: 312, excludedLines: 0, excludedFiles: 0, pricedFiles: 40}, yellowPrice);
+        expect(fewFiles).toContain("**39–96 min**");
+        expect(manyFiles).toContain("**39–96 min**");
     });
 });
 

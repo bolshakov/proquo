@@ -76,6 +76,8 @@ With no range argument it prices the working-tree diff. The CLI and the GitHub A
   bound passes a 60-minute focused-review session. Red (above 400) is past that ceiling.
 - Red-zone PRs get a split suggestion: breaking the PR into ≤200-line pieces restores per-line detection
   quality.
+- PRs that touch an outlier number of files also get an informational note about the added review context —
+  this never changes the minutes range or the tier.
 
 ## Configuration
 
@@ -98,6 +100,37 @@ weights:
   before the built-ins, so a rule here overrides a default for the same file. Defaults already down-weight
   test files (`*.test.*`, `*.spec.*`, `test/`, `tests/`, `spec/`, `__tests__/`) at 0.5 — tests are still
   reviewed, just faster per line than core logic. Any file not matched by a pattern keeps a weight of 1.
+
+## Research
+
+Published research backs why ProQuo prices by size and rate at all, not just the general instinct that
+smaller PRs are easier to review.
+
+- Cohen, Teleki & Brown, "Code Review at Cisco Systems," in *Best Kept Secrets of Peer Code Review*
+  (SmartBear Software, 2006) — a vendor-published field study of 2,500 reviews across 3.2 million lines
+  of code at Cisco, not a peer-reviewed paper. It found that defect detection falls once a review grows
+  past a certain size, that reviewing too fast lowers the fraction of defects caught, and that a review
+  session has a point past which attention degrades.
+- The older, separate tradition of formal Fagan-style code inspections (e.g. Basili & Pericone; Russell,
+  as summarized in McConnell's *Code Complete*) independently established that inspection rate strongly
+  affects defects found per line — a second, earlier line of evidence pointing the same direction as the
+  Cisco study.
+
+ProQuo's specific size band, rate range, and session length are tuned from this literature, not copied
+from it — the exact numbers live in the code, not here, so this section can't drift out of sync with it.
+
+- Bosu, Greiler & Bird, "Characteristics of Useful Code Reviews: An Empirical Study at Microsoft" (MSR
+  2015) — found that the proportion of useful review comments declines as a change touches more files, a
+  direction-only finding with no reported magnitude or functional form, from a single company's internal
+  tooling.
+- Sadowski et al., "Modern Code Review: A Case Study at Google" (ICSE-SEIP 2018) — found that the large
+  majority of code changes touch only a handful of files, a distribution later independently confirmed on
+  ordinary GitHub pull requests, which is what makes a change touching many files a genuine outlier rather
+  than typical.
+
+Together these say a many-file change is a genuine outlier, and outliers are harder to review — but
+neither study hands us a formula, so ProQuo flags file spread as context for the reviewer rather than
+pricing it. The exact threshold lives in the code, not here.
 
 ## Development
 

@@ -11,12 +11,14 @@ export interface SizeResult {
     effectiveLines: number;
     excludedLines: number;
     excludedFiles: number;
+    pricedFiles: number;
 }
 
 export function effectiveSize(files: PrFile[], config: ProquoConfig): SizeResult {
     let weightedSum = 0;
     let excludedLines = 0;
     let excludedFiles = 0;
+    let pricedFiles = 0;
     for (const file of files) {
         const lines = file.additions + file.deletions;
         if (isExcluded(file.filename, config)) {
@@ -24,7 +26,8 @@ export function effectiveSize(files: PrFile[], config: ProquoConfig): SizeResult
             excludedFiles += 1;
         } else {
             weightedSum += weightFor(file.filename, config) * lines;
+            pricedFiles += 1;
         }
     }
-    return {effectiveLines: Math.round(weightedSum), excludedLines, excludedFiles};
+    return {effectiveLines: Math.round(weightedSum), excludedLines, excludedFiles, pricedFiles};
 }
