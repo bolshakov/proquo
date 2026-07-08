@@ -20,6 +20,7 @@ async function main(): Promise<void> {
             }),
         comments: octokit.rest.issues,
         target: {owner: context.repo.owner, repo: context.repo.repo, issueNumber: pr.number},
+        now: () => new Date(),
     });
 }
 
