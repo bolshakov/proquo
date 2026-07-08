@@ -128,7 +128,7 @@ describe("renderComment", () => {
     it("embeds a machine-parsable price-history comment", () => {
         const history = historyFor(yellowPrice, size);
         const body = renderComment(size, yellowPrice, history);
-        expect(body).toContain(`<!-- review-economy:price-data ${JSON.stringify(history)} -->`);
+        expect(body).toContain(`<!-- proquo:price-data ${JSON.stringify(history)} -->`);
     });
 
     it("shows a delta line with the full previous range when the average dropped", () => {
@@ -219,25 +219,25 @@ describe("parsePriceHistory", () => {
     });
 
     it("returns null when the embedded data is malformed", () => {
-        const body = "<!-- review-economy:price-data not-json -->";
+        const body = "<!-- proquo:price-data not-json -->";
         expect(parsePriceHistory(body)).toBeNull();
     });
 
     it("returns null for the old lowerMinutes/upperMinutes-only shape", () => {
-        const body = '<!-- review-economy:price-data {"lowerMinutes":39,"upperMinutes":96} -->';
+        const body = '<!-- proquo:price-data {"lowerMinutes":39,"upperMinutes":96} -->';
         expect(parsePriceHistory(body)).toBeNull();
     });
 
     it("returns null for an unknown version", () => {
         const history = {...historyFor(yellowPrice, size), version: 2};
-        const body = `<!-- review-economy:price-data ${JSON.stringify(history)} -->`;
+        const body = `<!-- proquo:price-data ${JSON.stringify(history)} -->`;
         expect(parsePriceHistory(body)).toBeNull();
     });
 
     it("returns null when a snapshot has an invalid tier", () => {
         const history = historyFor(yellowPrice, size);
         const corrupted = {...history, current: {...history.current, tier: "blue"}};
-        const body = `<!-- review-economy:price-data ${JSON.stringify(corrupted)} -->`;
+        const body = `<!-- proquo:price-data ${JSON.stringify(corrupted)} -->`;
         expect(parsePriceHistory(body)).toBeNull();
     });
 
@@ -245,7 +245,7 @@ describe("parsePriceHistory", () => {
         const history = historyFor(yellowPrice, size);
         const {pricedFiles, ...rest} = history.current;
         const corrupted = {...history, current: rest};
-        const body = `<!-- review-economy:price-data ${JSON.stringify(corrupted)} -->`;
+        const body = `<!-- proquo:price-data ${JSON.stringify(corrupted)} -->`;
         expect(parsePriceHistory(body)).toBeNull();
     });
 });

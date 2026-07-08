@@ -113,7 +113,7 @@ describe("run", () => {
     it("resets the history when the existing comment predates the price-history schema", async () => {
         const legacyBody = [
             MARKER,
-            '<!-- review-economy:price-data {"lowerMinutes":39,"upperMinutes":96} -->',
+            '<!-- proquo:price-data {"lowerMinutes":39,"upperMinutes":96} -->',
             "### Review price tag",
             "",
             "some old-shape comment",

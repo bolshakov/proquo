@@ -12,7 +12,7 @@ import {
     type PreviousPrice,
 } from "@proquo/core";
 
-export const MARKER = "<!-- review-economy:price-tag -->";
+export const MARKER = "<!-- proquo:price-tag -->";
 
 function fileSpreadNote(effectiveLines: number, pricedFiles: number): string | null {
     const note = coreFileSpreadNote(effectiveLines, pricedFiles);
@@ -54,7 +54,7 @@ export function snapshotFrom(price: Price, size: SizeResult, at: string): PriceS
     };
 }
 
-const PRICE_DATA_MARKER = "review-economy:price-data";
+const PRICE_DATA_MARKER = "proquo:price-data";
 const PRICE_DATA_PATTERN = new RegExp(`<!-- ${PRICE_DATA_MARKER} (.*?) -->`);
 
 export function priceHistoryComment(history: PriceHistory): string {
