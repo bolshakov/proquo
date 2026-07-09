@@ -21,6 +21,11 @@ async function main(): Promise<void> {
         comments: octokit.rest.issues,
         target: {owner: context.repo.owner, repo: context.repo.repo, issueNumber: pr.number},
         now: () => new Date(),
+        logGroup: (title, lines) => {
+            core.startGroup(title);
+            lines.forEach((line) => core.info(line));
+            core.endGroup();
+        },
     });
 }
 
