@@ -1,24 +1,33 @@
-import {explainExclusion, explainWeight} from "./exclusions";
+import {explainExclusion, explainWeight, type PatternSource} from "./exclusions";
 import {classifyPatchLines, languageFor} from "./comments";
 import {DEFAULT_CONFIG, type ProquoConfig} from "./config";
 import type {PrFile, SizeResult} from "./size";
 
 export type FallbackReason = "no-patch" | "unsupported-language" | "classification-mismatch";
 
-export interface FileBreakdown {
+export interface ExcludedFileBreakdown {
     filename: string;
     rawLines: number;
-    excluded: boolean;
-    exclusionPattern?: string;
-    exclusionSource?: "config" | "default";
-    weight?: number;
-    weightPattern?: string;
-    weightSource?: "config" | "default";
-    commentLines?: number;
-    linesSaved?: number;
-    weightedLines?: number;
-    fallbackReason?: FallbackReason;
+    excluded: true;
+    exclusionPattern: string;
+    exclusionSource: PatternSource;
 }
+
+interface PricedFileBreakdownBase {
+    filename: string;
+    rawLines: number;
+    excluded: false;
+    weight: number;
+    weightPattern?: string;
+    weightSource?: PatternSource;
+    weightedLines: number;
+}
+
+export type PricedFileBreakdown =
+    | (PricedFileBreakdownBase & {commentLines: number; linesSaved: number; fallbackReason?: never})
+    | (PricedFileBreakdownBase & {commentLines?: never; linesSaved?: never; fallbackReason: FallbackReason});
+
+export type FileBreakdown = ExcludedFileBreakdown | PricedFileBreakdown;
 
 export interface SizeExplanation {
     size: SizeResult;
@@ -29,12 +38,9 @@ export interface SizeExplanation {
     commentWeight: number;
 }
 
-interface WeightedLinesExplanation {
-    weightedLines: number;
-    commentLines?: number;
-    linesSaved?: number;
-    fallbackReason?: FallbackReason;
-}
+type WeightedLinesExplanation =
+    | {weightedLines: number; commentLines: number; linesSaved: number; fallbackReason?: never}
+    | {weightedLines: number; commentLines?: never; linesSaved?: never; fallbackReason: FallbackReason};
 
 function explainWeightedLines(file: PrFile, weight: number, config: ProquoConfig): WeightedLinesExplanation {
     const totalLines = file.additions + file.deletions;
@@ -84,24 +90,30 @@ export function explainSize(files: PrFile[], config: ProquoConfig): SizeExplanat
 
         pricedFiles += 1;
         const weightExplanation = explainWeight(file.filename, config);
-        const {weightedLines, commentLines, linesSaved, fallbackReason} = explainWeightedLines(
-            file,
-            weightExplanation.weight,
-            config,
-        );
-        weightedSum += weightedLines;
-        breakdown.push({
+        const weightedResult = explainWeightedLines(file, weightExplanation.weight, config);
+        weightedSum += weightedResult.weightedLines;
+        const priced = {
             filename: file.filename,
             rawLines,
-            excluded: false,
+            excluded: false as const,
             weight: weightExplanation.weight,
             weightPattern: weightExplanation.pattern,
             weightSource: weightExplanation.source,
-            commentLines,
-            linesSaved,
-            weightedLines,
-            fallbackReason,
-        });
+        };
+        if (weightedResult.fallbackReason !== undefined) {
+            breakdown.push({
+                ...priced,
+                weightedLines: weightedResult.weightedLines,
+                fallbackReason: weightedResult.fallbackReason,
+            });
+        } else {
+            breakdown.push({
+                ...priced,
+                weightedLines: weightedResult.weightedLines,
+                commentLines: weightedResult.commentLines,
+                linesSaved: weightedResult.linesSaved,
+            });
+        }
     }
 
     return {
