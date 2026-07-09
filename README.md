@@ -53,6 +53,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+Every run also logs a full calculation breakdown — per-file exclusion reasons, weights and whether they
+came from `.proquo.yml` or a built-in default, and comment down-weighting — under a collapsed
+"proquo: calculation breakdown" group in the workflow run's log. It doesn't appear in the PR comment
+itself; expand the group in the Actions log when a result needs double-checking.
+
 ## Local CLI
 
 Price a diff before you open the PR — a pre-push self-check:
@@ -63,6 +68,14 @@ node packages/cli/bin/proquo.mjs main...HEAD
 ```
 
 With no range argument it prices the working-tree diff. The CLI and the GitHub Action share the same pricing engine (`@proquo/core`), so a diff prices identically whether you check it locally or in CI.
+
+Add `--explain` to see, per file, whether it was excluded (and by which pattern), what weight was applied
+and whether it came from `.proquo.yml` or a built-in default, and how much comment down-weighting changed
+its contribution:
+
+```bash
+node packages/cli/bin/proquo.mjs --explain main...HEAD
+```
 
 ## How the price is computed
 
