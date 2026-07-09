@@ -1,4 +1,5 @@
 import {execFileSync} from "node:child_process";
+import {parseArgs} from "./args";
 import {run} from "./run";
 
 function gitNumstat(range: string | undefined): string {
@@ -19,11 +20,13 @@ function gitFullDiff(range: string | undefined): string {
 }
 
 function main(): void {
+    const {range, explain} = parseArgs(process.argv.slice(2));
     run({
         gitNumstat,
         gitFullDiff,
         cwd: process.cwd(),
-        range: process.argv[2],
+        range,
+        explain,
         stdout: (text) => process.stdout.write(text),
     });
 }

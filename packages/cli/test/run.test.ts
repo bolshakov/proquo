@@ -54,4 +54,35 @@ describe("run", () => {
         const output: string = stdout.mock.calls[0][0];
         expect(output).toContain("No effective source changes");
     });
+
+    it("prints the calculation breakdown before the report when --explain is set", () => {
+        const stdout = vi.fn();
+        run({
+            gitNumstat: () => "80\t20\tsrc/a.ts\n500\t100\tpackage-lock.json\n",
+            gitFullDiff: () => "",
+            cwd: process.cwd(),
+            range: undefined,
+            explain: true,
+            stdout,
+        });
+        expect(stdout).toHaveBeenCalledTimes(1);
+        const output: string = stdout.mock.calls[0][0];
+        expect(output).toContain("Config: no .proquo.yml found");
+        expect(output).toContain("src/a.ts  100 lines  weight 1 (no rule matched)");
+        expect(output).toContain("package-lock.json  600 lines  EXCLUDED (default: **/package-lock.json)");
+        expect(output).toContain("100 effective lines");
+    });
+
+    it("omits the breakdown when --explain is not set", () => {
+        const stdout = vi.fn();
+        run({
+            gitNumstat: () => "80\t20\tsrc/a.ts\n",
+            gitFullDiff: () => "",
+            cwd: process.cwd(),
+            range: undefined,
+            stdout,
+        });
+        const output: string = stdout.mock.calls[0][0];
+        expect(output).not.toContain("Config:");
+    });
 });
