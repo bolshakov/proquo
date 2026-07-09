@@ -81,6 +81,10 @@ describe("parseConfigFile - commentWeight", () => {
         expect(() => parseConfigFile("commentWeight: fast\n")).toThrow(/commentWeight/);
         expect(() => parseConfigFile("commentWeight: -1\n")).toThrow(/commentWeight/);
     });
+
+    it("throws when commentWeight is greater than 1", () => {
+        expect(() => parseConfigFile("commentWeight: 1.5\n")).toThrow(/commentWeight/);
+    });
 });
 
 describe("mergeConfig - commentWeight", () => {
@@ -108,9 +112,9 @@ describe("loadConfig", () => {
         if (dir) rmSync(dir, {recursive: true, force: true});
     });
 
-    it("returns the pure default config when .proquo.yml is missing", () => {
+    it("returns the exact DEFAULT_CONFIG object reference when .proquo.yml is missing", () => {
         dir = mkdtempSync(join(tmpdir(), "proquo-config-"));
-        expect(loadConfig(dir)).toEqual(DEFAULT_CONFIG);
+        expect(loadConfig(dir)).toBe(DEFAULT_CONFIG);
     });
 
     it("merges a real .proquo.yml file with the defaults", () => {
