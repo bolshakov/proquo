@@ -64,6 +64,14 @@ node packages/cli/bin/proquo.mjs main...HEAD
 
 With no range argument it prices the working-tree diff. The CLI and the GitHub Action share the same pricing engine (`@proquo/core`), so a diff prices identically whether you check it locally or in CI.
 
+Add `--explain` to see, per file, whether it was excluded (and by which pattern), what weight was applied
+and whether it came from `.proquo.yml` or a built-in default, and how much comment down-weighting changed
+its contribution:
+
+```bash
+node packages/cli/bin/proquo.mjs --explain main...HEAD
+```
+
 ## How the price is computed
 
 - Effective size = added + deleted lines, excluding lockfiles, vendored/build/generated paths, and minified
