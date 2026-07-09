@@ -97,8 +97,8 @@ function validateWeights(raw: unknown): WeightRule[] {
 
 function validateCommentWeight(raw: unknown): number | undefined {
     if (raw === undefined) return undefined;
-    if (!Number.isFinite(raw) || (raw as number) < 0) {
-        throw new Error(".proquo.yml: `commentWeight` must be a non-negative number");
+    if (!Number.isFinite(raw) || (raw as number) < 0 || (raw as number) > 1) {
+        throw new Error(".proquo.yml: `commentWeight` must be a number between 0 and 1");
     }
     return raw as number;
 }
