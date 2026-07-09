@@ -1,4 +1,4 @@
-import {effectiveSize, loadConfig, price} from "@proquo/core";
+import {explainSize, loadConfig, price, renderBreakdown} from "@proquo/core";
 import {parseNumstat, splitPatches} from "./diff";
 import {renderReport} from "./report";
 
@@ -9,6 +9,7 @@ export interface RunDeps {
 
     cwd: string;
     range: string | undefined;
+    explain?: boolean;
     stdout(text: string): void;
 }
 
@@ -17,6 +18,9 @@ export function run(deps: RunDeps): void {
     const files = parseNumstat(deps.gitNumstat(deps.range));
     const patches = splitPatches(deps.gitFullDiff(deps.range));
     const filesWithPatches = files.map((file) => ({...file, patch: patches.get(file.filename)}));
-    const size = effectiveSize(filesWithPatches, config);
-    deps.stdout(renderReport(size, price(size.effectiveLines)) + "\n");
+
+    const explanation = explainSize(filesWithPatches, config);
+    const report = renderReport(explanation.size, price(explanation.size.effectiveLines));
+    const output = deps.explain ? `${renderBreakdown(explanation).join("\n")}\n\n${report}` : report;
+    deps.stdout(output + "\n");
 }
