@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {isExcluded, weightFor} from "../src/exclusions";
+import {explainExclusion, explainWeight, isExcluded, weightFor} from "../src/exclusions";
 import {DEFAULT_CONFIG, type ProquoConfig} from "../src/config";
 
 describe("isExcluded", () => {
@@ -72,5 +72,72 @@ describe("weightFor", () => {
             weights: [{pattern: "**/*.test.ts", weight: 0.2}, ...DEFAULT_CONFIG.weights],
         };
         expect(weightFor("src/pricing.test.ts", config)).toBe(0.2);
+    });
+});
+
+describe("explainExclusion", () => {
+    it("reports the matched default pattern and source for a built-in exclusion", () => {
+        expect(explainExclusion("package-lock.json", DEFAULT_CONFIG)).toEqual({
+            excluded: true,
+            pattern: "**/package-lock.json",
+            source: "default",
+        });
+    });
+
+    it("reports source \"config\" for a user-added exclude pattern", () => {
+        const config: ProquoConfig = {
+            exclude: [...DEFAULT_CONFIG.exclude, "**/*.generated.ts"],
+            weights: DEFAULT_CONFIG.weights,
+            commentWeight: DEFAULT_CONFIG.commentWeight,
+        };
+        expect(explainExclusion("src/api.generated.ts", config)).toEqual({
+            excluded: true,
+            pattern: "**/*.generated.ts",
+            source: "config",
+        });
+    });
+
+    it("reports excluded: false for a file that isn't excluded", () => {
+        expect(explainExclusion("src/main.ts", DEFAULT_CONFIG)).toEqual({excluded: false});
+    });
+});
+
+describe("explainWeight", () => {
+    it("reports the matched default weight rule and source", () => {
+        expect(explainWeight("src/foo.test.ts", DEFAULT_CONFIG)).toEqual({
+            weight: 0.5,
+            pattern: "**/*.test.*",
+            source: "default",
+        });
+    });
+
+    it("omits pattern/source when no rule matches (implicit weight 1)", () => {
+        expect(explainWeight("src/foo.ts", DEFAULT_CONFIG)).toEqual({weight: 1});
+    });
+
+    it("reports source \"config\" for a user weight rule", () => {
+        const config: ProquoConfig = {
+            exclude: DEFAULT_CONFIG.exclude,
+            weights: [{pattern: "**/*.test.ts", weight: 0.2}, ...DEFAULT_CONFIG.weights],
+            commentWeight: DEFAULT_CONFIG.commentWeight,
+        };
+        expect(explainWeight("src/foo.test.ts", config)).toEqual({
+            weight: 0.2,
+            pattern: "**/*.test.ts",
+            source: "config",
+        });
+    });
+
+    it("labels a user rule that duplicates a default pattern+weight as \"default\"", () => {
+        const config: ProquoConfig = {
+            exclude: DEFAULT_CONFIG.exclude,
+            weights: [{pattern: "**/*.test.*", weight: 0.5}, ...DEFAULT_CONFIG.weights],
+            commentWeight: DEFAULT_CONFIG.commentWeight,
+        };
+        expect(explainWeight("src/foo.test.ts", config)).toEqual({
+            weight: 0.5,
+            pattern: "**/*.test.*",
+            source: "default",
+        });
     });
 });
