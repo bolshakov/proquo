@@ -5,9 +5,11 @@ import {
     footnoteParts,
     formatNumber,
     formatRange,
+    renderBreakdown,
     tierTail,
 } from "../src/report";
 import type {Price} from "../src/pricing";
+import type {SizeExplanation} from "../src/explain";
 
 const yellowWithSession: Price = {lowerMinutes: 39, upperMinutes: 96, tier: "yellow", sessionFlag: true, splitNudge: false};
 const yellowNoSession: Price = {lowerMinutes: 20, upperMinutes: 45, tier: "yellow", sessionFlag: false, splitNudge: false};
@@ -119,5 +121,200 @@ describe("computeDelta", () => {
             direction: "up",
             previous: {lowerMinutes: 0, upperMinutes: 0},
         });
+    });
+});
+
+describe("renderBreakdown", () => {
+    it("renders the config summary line when no .proquo.yml was found", () => {
+        const explanation: SizeExplanation = {
+            size: {effectiveLines: 0, excludedLines: 0, excludedFiles: 0, pricedFiles: 0},
+            files: [],
+            configFileFound: false,
+            customExcludeCount: 0,
+            customWeightCount: 0,
+            commentWeight: 0.3,
+        };
+        expect(renderBreakdown(explanation)[0]).toBe(
+            "Config: no .proquo.yml found — using built-in defaults (commentWeight 0.3)",
+        );
+    });
+
+    it("renders the config summary line with custom counts when a .proquo.yml was found", () => {
+        const explanation: SizeExplanation = {
+            size: {effectiveLines: 0, excludedLines: 0, excludedFiles: 0, pricedFiles: 0},
+            files: [],
+            configFileFound: true,
+            customExcludeCount: 2,
+            customWeightCount: 1,
+            commentWeight: 0.4,
+        };
+        expect(renderBreakdown(explanation)[0]).toBe(
+            "Config: .proquo.yml found — 2 custom exclude patterns, 1 custom weight rule, commentWeight 0.4",
+        );
+    });
+
+    it("renders an excluded file with its matched pattern and source", () => {
+        const explanation: SizeExplanation = {
+            size: {effectiveLines: 0, excludedLines: 120, excludedFiles: 1, pricedFiles: 0},
+            files: [
+                {
+                    filename: "docs/__generated__/x.json",
+                    rawLines: 120,
+                    excluded: true,
+                    exclusionPattern: "**/__generated__/**",
+                    exclusionSource: "default",
+                },
+            ],
+            configFileFound: false,
+            customExcludeCount: 0,
+            customWeightCount: 0,
+            commentWeight: 0.3,
+        };
+        const lines = renderBreakdown(explanation);
+        expect(lines).toContain(
+            "docs/__generated__/x.json  120 lines  EXCLUDED (default: **/__generated__/**)",
+        );
+    });
+
+    it("renders a priced file with weight, comment down-weighting, and the weighted total", () => {
+        const explanation: SizeExplanation = {
+            size: {effectiveLines: 1, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+            files: [
+                {
+                    filename: "src/a.test.ts",
+                    rawLines: 2,
+                    excluded: false,
+                    weight: 0.5,
+                    weightPattern: "**/*.test.*",
+                    weightSource: "default",
+                    commentLines: 1,
+                    linesSaved: 0.35,
+                    weightedLines: 0.65,
+                },
+            ],
+            configFileFound: false,
+            customExcludeCount: 0,
+            customWeightCount: 0,
+            commentWeight: 0.3,
+        };
+        const lines = renderBreakdown(explanation);
+        expect(lines).toContain(
+            "src/a.test.ts  2 lines  weight 0.5 (default: **/*.test.*), 1 comment line down-weighted (saved 0.35) → 0.65",
+        );
+    });
+
+    it("omits the comment clause entirely when a classified file has zero comment lines", () => {
+        const explanation: SizeExplanation = {
+            size: {effectiveLines: 2, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+            files: [
+                {
+                    filename: "src/a.ts",
+                    rawLines: 2,
+                    excluded: false,
+                    weight: 1,
+                    commentLines: 0,
+                    linesSaved: 0,
+                    weightedLines: 2,
+                },
+            ],
+            configFileFound: false,
+            customExcludeCount: 0,
+            customWeightCount: 0,
+            commentWeight: 0.3,
+        };
+        const lines = renderBreakdown(explanation);
+        expect(lines).toContain("src/a.ts  2 lines  weight 1 (no rule matched) → 2.00");
+    });
+
+    it("renders a priced file with no matched weight rule as \"no rule matched\"", () => {
+        const explanation: SizeExplanation = {
+            size: {effectiveLines: 2, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+            files: [
+                {filename: "src/a.ts", rawLines: 2, excluded: false, weight: 1, weightedLines: 2, fallbackReason: "no-patch"},
+            ],
+            configFileFound: false,
+            customExcludeCount: 0,
+            customWeightCount: 0,
+            commentWeight: 0.3,
+        };
+        const lines = renderBreakdown(explanation);
+        expect(lines).toContain(
+            "src/a.ts  2 lines  weight 1 (no rule matched), comment down-weighting skipped (no patch available) → 2.00",
+        );
+    });
+
+    it("labels an \"unsupported-language\" fallback", () => {
+        const explanation: SizeExplanation = {
+            size: {effectiveLines: 1, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+            files: [
+                {
+                    filename: "Dockerfile",
+                    rawLines: 1,
+                    excluded: false,
+                    weight: 1,
+                    weightedLines: 1,
+                    fallbackReason: "unsupported-language",
+                },
+            ],
+            configFileFound: false,
+            customExcludeCount: 0,
+            customWeightCount: 0,
+            commentWeight: 0.3,
+        };
+        const lines = renderBreakdown(explanation);
+        expect(lines).toContain(
+            "Dockerfile  1 lines  weight 1 (no rule matched), comment down-weighting skipped (unsupported language) → 1.00",
+        );
+    });
+
+    it("labels a \"classification-mismatch\" fallback", () => {
+        const explanation: SizeExplanation = {
+            size: {effectiveLines: 5, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+            files: [
+                {
+                    filename: "src/a.ts",
+                    rawLines: 5,
+                    excluded: false,
+                    weight: 1,
+                    weightedLines: 5,
+                    fallbackReason: "classification-mismatch",
+                },
+            ],
+            configFileFound: false,
+            customExcludeCount: 0,
+            customWeightCount: 0,
+            commentWeight: 0.3,
+        };
+        const lines = renderBreakdown(explanation);
+        expect(lines).toContain(
+            "src/a.ts  5 lines  weight 1 (no rule matched), comment down-weighting skipped (partial patch) → 5.00",
+        );
+    });
+
+    it("pluralizes \"comment lines\" when more than one comment line was down-weighted", () => {
+        const explanation: SizeExplanation = {
+            size: {effectiveLines: 1, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+            files: [
+                {
+                    filename: "src/a.test.ts",
+                    rawLines: 4,
+                    excluded: false,
+                    weight: 0.5,
+                    weightPattern: "**/*.test.*",
+                    weightSource: "default",
+                    commentLines: 2,
+                    linesSaved: 0.7,
+                    weightedLines: 1.3,
+                },
+            ],
+            configFileFound: false,
+            customExcludeCount: 0,
+            customWeightCount: 0,
+            commentWeight: 0.3,
+        };
+        const lines = renderBreakdown(explanation);
+        expect(lines).toContain(
+            "src/a.test.ts  4 lines  weight 0.5 (default: **/*.test.*), 2 comment lines down-weighted (saved 0.70) → 1.30",
+        );
     });
 });

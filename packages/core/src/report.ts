@@ -1,4 +1,5 @@
 import type {Price, Tier} from "./pricing";
+import type {FallbackReason, FileBreakdown, SizeExplanation} from "./explain";
 
 export const FILE_SPREAD_THRESHOLD = 10;
 
@@ -80,4 +81,50 @@ export function computeDelta(price: Price, previous: PreviousPrice | null | unde
     if (currentAvg === previousAvg) return null;
     if (previousAvg > 0 && Math.abs(currentAvg - previousAvg) / previousAvg <= DELTA_THRESHOLD) return null;
     return {direction: currentAvg < previousAvg ? "down" : "up", previous};
+}
+
+function fallbackReasonLabel(reason: FallbackReason): string {
+    switch (reason) {
+        case "no-patch":
+            return "no patch available";
+        case "unsupported-language":
+            return "unsupported language";
+        case "classification-mismatch":
+            return "partial patch";
+        default:
+            return reason satisfies never;
+    }
+}
+
+function renderFileBreakdown(file: FileBreakdown): string {
+    const lines = `${formatNumber(file.rawLines)} lines`;
+
+    if (file.excluded) {
+        return `${file.filename}  ${lines}  EXCLUDED (${file.exclusionSource}: ${file.exclusionPattern})`;
+    }
+
+    const weightLabel = file.weightPattern
+        ? `weight ${file.weight} (${file.weightSource}: ${file.weightPattern})`
+        : `weight ${file.weight} (no rule matched)`;
+
+    const commentLabel =
+        file.fallbackReason !== undefined
+            ? `, comment down-weighting skipped (${fallbackReasonLabel(file.fallbackReason)})`
+            : file.commentLines > 0
+              ? `, ${file.commentLines} comment line${file.commentLines === 1 ? "" : "s"} down-weighted (saved ${file.linesSaved.toFixed(2)})`
+              : "";
+
+    return `${file.filename}  ${lines}  ${weightLabel}${commentLabel} → ${file.weightedLines.toFixed(2)}`;
+}
+
+export function renderBreakdown(explanation: SizeExplanation): string[] {
+    const configLine = explanation.configFileFound
+        ? `Config: .proquo.yml found — ${explanation.customExcludeCount} custom exclude pattern${
+              explanation.customExcludeCount === 1 ? "" : "s"
+          }, ${explanation.customWeightCount} custom weight rule${
+              explanation.customWeightCount === 1 ? "" : "s"
+          }, commentWeight ${explanation.commentWeight}`
+        : `Config: no .proquo.yml found — using built-in defaults (commentWeight ${explanation.commentWeight})`;
+
+    return [configLine, "", ...explanation.files.map(renderFileBreakdown)];
 }

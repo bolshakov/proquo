@@ -27,7 +27,7 @@ describe("explainSize", () => {
             [{filename: "src/a.test.ts", additions: 2, deletions: 0, patch}],
             DEFAULT_CONFIG,
         );
-        // weight 0.5 (test file); comment line 0.5*0.3=0.15, code line 0.5*1=0.5 -> weightedLines 0.65
+        // weight 0.5 (test file). Comment line 0.5*0.3=0.15, code line 0.5*1=0.5 -> weightedLines 0.65.
         // flat weight would have been 0.5*2=1, so linesSaved = 1 - 0.65 = 0.35
         expect(result.files).toEqual([
             {
@@ -84,6 +84,14 @@ describe("explainSize", () => {
         expect(result.customExcludeCount).toBe(0);
         expect(result.customWeightCount).toBe(0);
         expect(result.commentWeight).toBe(DEFAULT_CONFIG.commentWeight);
+    });
+
+    it("reports configFileFound: true and zero custom counts when a config file adds no rules", () => {
+        const merged: ProquoConfig = mergeConfig({exclude: [], weights: [], commentWeight: 0.4});
+        const result = explainSize([], merged);
+        expect(result.configFileFound).toBe(true);
+        expect(result.customExcludeCount).toBe(0);
+        expect(result.customWeightCount).toBe(0);
     });
 
     it("reports configFileFound: true and non-zero custom counts for a merged config", () => {
