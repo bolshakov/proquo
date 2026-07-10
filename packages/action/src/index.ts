@@ -19,6 +19,7 @@ async function main(): Promise<void> {
                 per_page: 100,
             }),
         comments: octokit.rest.issues,
+        labels: octokit.rest.issues,
         target: {owner: context.repo.owner, repo: context.repo.repo, issueNumber: pr.number},
         now: () => new Date(),
         logGroup: (title, lines) => {
@@ -26,6 +27,7 @@ async function main(): Promise<void> {
             lines.forEach((line) => core.info(line));
             core.endGroup();
         },
+        warn: (message) => core.warning(message),
     });
 }
 

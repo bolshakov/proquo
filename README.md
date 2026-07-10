@@ -43,6 +43,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 jobs:
   price:
     name: Review Price Tag
@@ -57,6 +58,13 @@ Every run also logs a full calculation breakdown — per-file exclusion reasons,
 came from `.proquo.yml` or a built-in default, and comment down-weighting — under a collapsed
 "proquo: calculation breakdown" group in the workflow run's log. It doesn't appear in the PR comment
 itself; expand the group in the Actions log when a result needs double-checking.
+
+Every run also applies a size label to the PR — `proquo: small`, `proquo: medium`, or `proquo: large`,
+matching the green/yellow/red tier — so PRs can be filtered or scanned by cost straight from the PR
+list, without opening each one. Exactly one of these labels is kept on a PR at a time; it's removed and
+replaced when the tier changes on a later push. The three labels are created automatically in the repo
+the first time they're needed. Labeling requires the `issues: write` permission shown above — if it's
+missing, ProQuo logs a warning in the Actions log and still posts the price comment normally.
 
 ## Local CLI
 
