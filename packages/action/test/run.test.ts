@@ -35,6 +35,7 @@ function makeLabels(initial: string[] = []) {
             return {};
         }),
         createLabel: vi.fn().mockResolvedValue({}),
+        updateLabel: vi.fn().mockResolvedValue({}),
     };
 }
 

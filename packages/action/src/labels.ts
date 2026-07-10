@@ -19,6 +19,14 @@ export interface IssuesLabelsApi {
         color: string;
         description: string;
     }): Promise<unknown>;
+
+    updateLabel(params: {
+        owner: string;
+        repo: string;
+        name: string;
+        color: string;
+        description: string;
+    }): Promise<unknown>;
 }
 
 export const TIER_LABELS: Record<Tier, {name: string; color: string; description: string}> = {
@@ -52,13 +60,17 @@ export async function syncTierLabel(
 ): Promise<void> {
     const {owner, repo, issueNumber} = target;
     const desired = TIER_LABELS[tier];
+
+    // Attaching a label that doesn't exist auto-creates it grey, so we set our tier color ourselves.
+    await upsertLabelDefinition(api, owner, repo, desired);
+
     const {data} = await api.listLabelsOnIssue({owner, repo, issue_number: issueNumber, per_page: 100});
     const currentNames = data.map((label) => label.name);
 
-    // Add the desired label before removing stale ones: if the add fails, the PR keeps whatever
-    // tier label it already had rather than being stripped bare.
+    // Attach the desired label before removing stale ones: if the attach fails, the PR keeps
+    // whatever tier label it already had rather than being stripped bare.
     if (!currentNames.includes(desired.name)) {
-        await addLabel(api, target, desired);
+        await api.addLabels({owner, repo, issue_number: issueNumber, labels: [desired.name]});
     }
 
     for (const name of currentNames) {
@@ -68,19 +80,19 @@ export async function syncTierLabel(
     }
 }
 
-async function addLabel(
+async function upsertLabelDefinition(
     api: IssuesLabelsApi,
-    target: {owner: string; repo: string; issueNumber: number},
+    owner: string,
+    repo: string,
     label: {name: string; color: string; description: string},
 ): Promise<void> {
-    const {owner, repo, issueNumber} = target;
+    const {name, color, description} = label;
     try {
-        await api.addLabels({owner, repo, issue_number: issueNumber, labels: [label.name]});
+        await api.updateLabel({owner, repo, name, color, description});
     } catch (error) {
         if (!isNotFoundError(error)) {
             throw error;
         }
-        await api.createLabel({owner, repo, name: label.name, color: label.color, description: label.description});
-        await api.addLabels({owner, repo, issue_number: issueNumber, labels: [label.name]});
+        await api.createLabel({owner, repo, name, color, description});
     }
 }
