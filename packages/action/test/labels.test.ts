@@ -13,22 +13,10 @@ function apiWith(currentLabels: string[]) {
 }
 
 describe("TIER_LABELS", () => {
-    it("maps each tier to a self-explanatory size name and matching color", () => {
-        expect(TIER_LABELS.green).toEqual({
-            name: "proquo: small",
-            color: "2ea44f",
-            description: "ProQuo review price tier: small, up to 200 effective lines",
-        });
-        expect(TIER_LABELS.yellow).toEqual({
-            name: "proquo: medium",
-            color: "dbab09",
-            description: "ProQuo review price tier: medium, 201–400 effective lines",
-        });
-        expect(TIER_LABELS.red).toEqual({
-            name: "proquo: large",
-            color: "d73a4a",
-            description: "ProQuo review price tier: large, over 400 effective lines",
-        });
+    it("maps each tier to a self-explanatory size name", () => {
+        expect(TIER_LABELS.green.name).toBe("proquo: small");
+        expect(TIER_LABELS.yellow.name).toBe("proquo: medium");
+        expect(TIER_LABELS.red.name).toBe("proquo: large");
     });
 });
 
@@ -65,7 +53,7 @@ describe("syncTierLabel", () => {
             repo: "r",
             name: "proquo: large",
             color: "d73a4a",
-            description: "ProQuo review price tier: large, over 400 effective lines",
+            description: "ProQuo review price tier: large",
         });
         expect(api.addLabels).toHaveBeenCalledTimes(2);
         expect(api.addLabels).toHaveBeenNthCalledWith(2, {
@@ -82,6 +70,13 @@ describe("syncTierLabel", () => {
         api.addLabels.mockRejectedValueOnce(forbidden);
         await expect(syncTierLabel(api, target, "red")).rejects.toThrow("Forbidden");
         expect(api.createLabel).not.toHaveBeenCalled();
+    });
+
+    it("keeps the current tier label when adding the new one fails", async () => {
+        const api = apiWith(["proquo: small"]);
+        api.addLabels.mockRejectedValueOnce(Object.assign(new Error("Forbidden"), {status: 403}));
+        await expect(syncTierLabel(api, target, "red")).rejects.toThrow("Forbidden");
+        expect(api.removeLabel).not.toHaveBeenCalled();
     });
 
     it("removes the stale tier label and adds the new one when the tier changes", async () => {

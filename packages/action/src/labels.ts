@@ -21,27 +21,21 @@ export interface IssuesLabelsApi {
     }): Promise<unknown>;
 }
 
-export interface TierLabel {
-    name: string;
-    color: string;
-    description: string;
-}
-
-export const TIER_LABELS: Record<Tier, TierLabel> = {
+export const TIER_LABELS: Record<Tier, {name: string; color: string; description: string}> = {
     green: {
         name: "proquo: small",
         color: "2ea44f",
-        description: "ProQuo review price tier: small, up to 200 effective lines",
+        description: "ProQuo review price tier: small",
     },
     yellow: {
         name: "proquo: medium",
         color: "dbab09",
-        description: "ProQuo review price tier: medium, 201–400 effective lines",
+        description: "ProQuo review price tier: medium",
     },
     red: {
         name: "proquo: large",
         color: "d73a4a",
-        description: "ProQuo review price tier: large, over 400 effective lines",
+        description: "ProQuo review price tier: large",
     },
 };
 
@@ -61,29 +55,32 @@ export async function syncTierLabel(
     const {data} = await api.listLabelsOnIssue({owner, repo, issue_number: issueNumber, per_page: 100});
     const currentNames = data.map((label) => label.name);
 
-    if (currentNames.includes(desired.name)) {
-        return;
+    // Add the desired label before removing stale ones: if the add fails, the PR keeps whatever
+    // tier label it already had rather than being stripped bare.
+    if (!currentNames.includes(desired.name)) {
+        await addLabel(api, target, desired);
     }
 
     for (const name of currentNames) {
-        if (TIER_LABEL_NAMES.has(name)) {
+        if (name !== desired.name && TIER_LABEL_NAMES.has(name)) {
             await api.removeLabel({owner, repo, issue_number: issueNumber, name});
         }
     }
+}
 
+async function addLabel(
+    api: IssuesLabelsApi,
+    target: {owner: string; repo: string; issueNumber: number},
+    label: {name: string; color: string; description: string},
+): Promise<void> {
+    const {owner, repo, issueNumber} = target;
     try {
-        await api.addLabels({owner, repo, issue_number: issueNumber, labels: [desired.name]});
+        await api.addLabels({owner, repo, issue_number: issueNumber, labels: [label.name]});
     } catch (error) {
         if (!isNotFoundError(error)) {
             throw error;
         }
-        await api.createLabel({
-            owner,
-            repo,
-            name: desired.name,
-            color: desired.color,
-            description: desired.description,
-        });
-        await api.addLabels({owner, repo, issue_number: issueNumber, labels: [desired.name]});
+        await api.createLabel({owner, repo, name: label.name, color: label.color, description: label.description});
+        await api.addLabels({owner, repo, issue_number: issueNumber, labels: [label.name]});
     }
 }
