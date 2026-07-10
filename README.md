@@ -41,9 +41,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 permissions:
-  contents: read # read .proquo.yml config from a checkout (built-in defaults apply if absent)
+  contents: read       # read .proquo.yml config from a checkout (built-in defaults apply if absent)
   pull-requests: write # list the PR's changed files and post/update the price comment
-  issues: write # create and apply the proquo: small/medium/large size labels
+  issues: write        # create and apply the proquo: small/medium/large size labels
 jobs:
   price:
     name: Review Price Tag
