@@ -47,6 +47,10 @@ export const TIER_LABELS: Record<Tier, TierLabel> = {
 
 const TIER_LABEL_NAMES = new Set(Object.values(TIER_LABELS).map((label) => label.name));
 
+function isNotFoundError(error: unknown): boolean {
+    return typeof error === "object" && error !== null && "status" in error && (error as {status: unknown}).status === 404;
+}
+
 export async function syncTierLabel(
     api: IssuesLabelsApi,
     target: {owner: string; repo: string; issueNumber: number},
@@ -69,7 +73,10 @@ export async function syncTierLabel(
 
     try {
         await api.addLabels({owner, repo, issue_number: issueNumber, labels: [desired.name]});
-    } catch {
+    } catch (error) {
+        if (!isNotFoundError(error)) {
+            throw error;
+        }
         await api.createLabel({
             owner,
             repo,

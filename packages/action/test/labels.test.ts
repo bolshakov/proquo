@@ -57,7 +57,7 @@ describe("syncTierLabel", () => {
     it("creates the label at the repo level then adds it when addLabels 404s", async () => {
         const api = apiWith([]);
         api.addLabels
-            .mockRejectedValueOnce(new Error("Not Found"))
+            .mockRejectedValueOnce(Object.assign(new Error("Not Found"), {status: 404}))
             .mockResolvedValueOnce({});
         await syncTierLabel(api, target, "red");
         expect(api.createLabel).toHaveBeenCalledWith({
@@ -74,6 +74,14 @@ describe("syncTierLabel", () => {
             issue_number: 7,
             labels: ["proquo: large"],
         });
+    });
+
+    it("rethrows a non-404 addLabels error without creating the label", async () => {
+        const api = apiWith([]);
+        const forbidden = Object.assign(new Error("Forbidden"), {status: 403});
+        api.addLabels.mockRejectedValueOnce(forbidden);
+        await expect(syncTierLabel(api, target, "red")).rejects.toThrow("Forbidden");
+        expect(api.createLabel).not.toHaveBeenCalled();
     });
 
     it("removes the stale tier label and adds the new one when the tier changes", async () => {
