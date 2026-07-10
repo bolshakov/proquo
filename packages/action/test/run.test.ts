@@ -22,6 +22,22 @@ function makeComments(initial: {id: number; body: string} | null = null) {
     };
 }
 
+function makeLabels(initial: string[] = []) {
+    let current = [...initial];
+    return {
+        listLabelsOnIssue: vi.fn().mockImplementation(async () => ({data: current.map((name) => ({name}))})),
+        addLabels: vi.fn().mockImplementation(async ({labels}: {labels: string[]}) => {
+            current = [...current, ...labels];
+            return {};
+        }),
+        removeLabel: vi.fn().mockImplementation(async ({name}: {name: string}) => {
+            current = current.filter((n) => n !== name);
+            return {};
+        }),
+        createLabel: vi.fn().mockResolvedValue({}),
+    };
+}
+
 describe("run", () => {
     it("prices the PR files and upserts the sticky comment", async () => {
         const comments = makeComments();
@@ -34,6 +50,8 @@ describe("run", () => {
             target: {owner: "o", repo: "r", issueNumber: 3},
             now: fixedNow,
             logGroup: vi.fn(),
+            labels: makeLabels(),
+            warn: vi.fn(),
         });
         expect(comments.createComment).toHaveBeenCalledTimes(1);
         const body: string = comments.createComment.mock.calls[0][0].body;
@@ -54,6 +72,8 @@ describe("run", () => {
             target: {owner: "o", repo: "r", issueNumber: 3},
             now: fixedNow,
             logGroup,
+            labels: makeLabels(),
+            warn: vi.fn(),
         });
         expect(logGroup).toHaveBeenCalledTimes(1);
         const [title, lines] = logGroup.mock.calls[0];
@@ -87,6 +107,8 @@ describe("run", () => {
             target: {owner: "o", repo: "r", issueNumber: 3},
             now: fixedNow,
             logGroup: vi.fn(),
+            labels: makeLabels(),
+            warn: vi.fn(),
         });
         expect(comments.listComments).toHaveBeenCalledTimes(1);
         expect(comments.createComment).not.toHaveBeenCalled();
@@ -106,6 +128,8 @@ describe("run", () => {
             target: {owner: "o", repo: "r", issueNumber: 3},
             now: fixedNow,
             logGroup: vi.fn(),
+            labels: makeLabels(),
+            warn: vi.fn(),
         });
         const body: string = comments.createComment.mock.calls[0][0].body;
         expect(body).toContain("**1 effective lines**");
@@ -121,6 +145,8 @@ describe("run", () => {
             target,
             now: () => new Date("2024-01-01T00:00:00.000Z"),
             logGroup: vi.fn(),
+            labels: makeLabels(),
+            warn: vi.fn(),
         });
         await run({
             listPrFiles: vi.fn().mockResolvedValue([{filename: "src/a.ts", additions: 100, deletions: 0}]),
@@ -128,6 +154,8 @@ describe("run", () => {
             target,
             now: () => new Date("2024-01-02T00:00:00.000Z"),
             logGroup: vi.fn(),
+            labels: makeLabels(),
+            warn: vi.fn(),
         });
 
         const history = parsePriceHistory(comments.stored!.body)!;
@@ -153,6 +181,8 @@ describe("run", () => {
             target: {owner: "o", repo: "r", issueNumber: 8},
             now: fixedNow,
             logGroup: vi.fn(),
+            labels: makeLabels(),
+            warn: vi.fn(),
         });
         expect(comments.updateComment).toHaveBeenCalledTimes(1);
         const body: string = comments.updateComment.mock.calls[0][0].body;
@@ -160,5 +190,44 @@ describe("run", () => {
         const history = parsePriceHistory(body)!;
         expect(history.revisions).toBe(1);
         expect(history.first).toEqual(history.current);
+    });
+
+    it("syncs the PR's tier label to the computed price tier", async () => {
+        const comments = makeComments();
+        const labels = makeLabels();
+        await run({
+            listPrFiles: vi.fn().mockResolvedValue([{filename: "src/a.ts", additions: 900, deletions: 0}]),
+            comments,
+            labels,
+            target: {owner: "o", repo: "r", issueNumber: 3},
+            now: fixedNow,
+            logGroup: vi.fn(),
+            warn: vi.fn(),
+        });
+        expect(labels.addLabels).toHaveBeenCalledWith({
+            owner: "o",
+            repo: "r",
+            issue_number: 3,
+            labels: ["proquo: large"],
+        });
+    });
+
+    it("warns but does not fail the run when label sync throws", async () => {
+        const comments = makeComments();
+        const labels = makeLabels();
+        labels.listLabelsOnIssue.mockRejectedValue(new Error("boom"));
+        const warn = vi.fn();
+        await run({
+            listPrFiles: vi.fn().mockResolvedValue([{filename: "src/a.ts", additions: 80, deletions: 20}]),
+            comments,
+            labels,
+            target: {owner: "o", repo: "r", issueNumber: 3},
+            now: fixedNow,
+            logGroup: vi.fn(),
+            warn,
+        });
+        expect(comments.createComment).toHaveBeenCalledTimes(1);
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn.mock.calls[0][0]).toContain("boom");
     });
 });
