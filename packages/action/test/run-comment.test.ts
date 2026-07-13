@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from "vitest";
-import {run} from "../src/run";
+import {runComment} from "../src/run";
 import {MARKER, parsePriceHistory, renderComment, type PriceHistory} from "../src/comment";
+import type {ComputeResult} from "../src/result";
 
 const fixedNow = () => new Date("2024-01-01T00:00:00.000Z");
 
@@ -22,47 +23,28 @@ function makeComments(initial: {id: number; body: string} | null = null) {
     };
 }
 
-describe("run", () => {
-    it("prices the PR files and upserts the sticky comment", async () => {
+function computeResult(overrides: Partial<ComputeResult> = {}): ComputeResult {
+    return {
+        version: 1,
+        issueNumber: 3,
+        size: {effectiveLines: 100, excludedLines: 600, excludedFiles: 1, pricedFiles: 1},
+        price: {lowerMinutes: 12, upperMinutes: 30, tier: "green", sessionFlag: false, splitNudge: false},
+        ...overrides,
+    };
+}
+
+describe("runComment", () => {
+    it("creates the sticky comment from a ComputeResult", async () => {
         const comments = makeComments();
-        await run({
-            listPrFiles: vi.fn().mockResolvedValue([
-                {filename: "src/a.ts", additions: 80, deletions: 20},
-                {filename: "package-lock.json", additions: 500, deletions: 100},
-            ]),
-            comments,
-            target: {owner: "o", repo: "r", issueNumber: 3},
-            now: fixedNow,
-            logGroup: vi.fn(),
-        });
+        await runComment(
+            {comments, target: {owner: "o", repo: "r", issueNumber: 3}, now: fixedNow},
+            computeResult(),
+        );
         expect(comments.createComment).toHaveBeenCalledTimes(1);
         const body: string = comments.createComment.mock.calls[0][0].body;
         expect(body).toContain("100 effective lines");
         expect(body).toContain("12–30 min");
         expect(body).toContain("600 lines across 1 generated/lockfile file were excluded");
-    });
-
-    it("logs the calculation breakdown via logGroup without changing the comment body", async () => {
-        const comments = makeComments();
-        const logGroup = vi.fn();
-        await run({
-            listPrFiles: vi.fn().mockResolvedValue([
-                {filename: "src/a.ts", additions: 80, deletions: 20},
-                {filename: "package-lock.json", additions: 500, deletions: 100},
-            ]),
-            comments,
-            target: {owner: "o", repo: "r", issueNumber: 3},
-            now: fixedNow,
-            logGroup,
-        });
-        expect(logGroup).toHaveBeenCalledTimes(1);
-        const [title, lines] = logGroup.mock.calls[0];
-        expect(title).toBe("proquo: calculation breakdown");
-        expect(lines).toContain("Config: no .proquo.yml found — using built-in defaults (commentWeight 0.3)");
-        expect(lines.some((line: string) => line.includes("package-lock.json"))).toBe(true);
-        const body: string = comments.createComment.mock.calls[0][0].body;
-        expect(body).toContain("100 effective lines");
-        expect(body).not.toContain("Config:");
     });
 
     it("updates the existing sticky comment and shows the delta since the previous price", async () => {
@@ -81,13 +63,10 @@ describe("run", () => {
             oldHistory,
         );
         const comments = makeComments({id: 42, body: oldBody});
-        await run({
-            listPrFiles: vi.fn().mockResolvedValue([{filename: "src/a.ts", additions: 80, deletions: 20}]),
-            comments,
-            target: {owner: "o", repo: "r", issueNumber: 3},
-            now: fixedNow,
-            logGroup: vi.fn(),
-        });
+        await runComment(
+            {comments, target: {owner: "o", repo: "r", issueNumber: 3}, now: fixedNow},
+            computeResult({size: {effectiveLines: 100, excludedLines: 0, excludedFiles: 0, pricedFiles: 1}}),
+        );
         expect(comments.listComments).toHaveBeenCalledTimes(1);
         expect(comments.createComment).not.toHaveBeenCalled();
         expect(comments.updateComment).toHaveBeenCalledTimes(1);
@@ -95,40 +74,26 @@ describe("run", () => {
         expect(body).toContain("down from 108–270 min");
     });
 
-    it("down-weights comment-only lines when listPrFiles returns a patch", async () => {
-        const comments = makeComments();
-        const patch = ["@@ -1,2 +1,2 @@", "+// a comment", "+const x = 1;"].join("\n");
-        await run({
-            listPrFiles: vi
-                .fn()
-                .mockResolvedValue([{filename: "src/a.ts", additions: 2, deletions: 0, patch}]),
-            comments,
-            target: {owner: "o", repo: "r", issueNumber: 3},
-            now: fixedNow,
-            logGroup: vi.fn(),
-        });
-        const body: string = comments.createComment.mock.calls[0][0].body;
-        expect(body).toContain("**1 effective lines**");
-    });
-
     it("carries the first snapshot forward and increments revisions across runs", async () => {
         const comments = makeComments();
         const target = {owner: "o", repo: "r", issueNumber: 7};
 
-        await run({
-            listPrFiles: vi.fn().mockResolvedValue([{filename: "src/a.ts", additions: 300, deletions: 0}]),
-            comments,
-            target,
-            now: () => new Date("2024-01-01T00:00:00.000Z"),
-            logGroup: vi.fn(),
-        });
-        await run({
-            listPrFiles: vi.fn().mockResolvedValue([{filename: "src/a.ts", additions: 100, deletions: 0}]),
-            comments,
-            target,
-            now: () => new Date("2024-01-02T00:00:00.000Z"),
-            logGroup: vi.fn(),
-        });
+        await runComment(
+            {comments, target, now: () => new Date("2024-01-01T00:00:00.000Z")},
+            computeResult({
+                issueNumber: 7,
+                size: {effectiveLines: 300, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+                price: {lowerMinutes: 36, upperMinutes: 90, tier: "yellow", sessionFlag: true, splitNudge: false},
+            }),
+        );
+        await runComment(
+            {comments, target, now: () => new Date("2024-01-02T00:00:00.000Z")},
+            computeResult({
+                issueNumber: 7,
+                size: {effectiveLines: 100, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+                price: {lowerMinutes: 12, upperMinutes: 30, tier: "green", sessionFlag: false, splitNudge: false},
+            }),
+        );
 
         const history = parsePriceHistory(comments.stored!.body)!;
         expect(history.first.effectiveLines).toBe(300);
@@ -147,13 +112,14 @@ describe("run", () => {
             "some old-shape comment",
         ].join("\n");
         const comments = makeComments({id: 9, body: legacyBody});
-        await run({
-            listPrFiles: vi.fn().mockResolvedValue([{filename: "src/a.ts", additions: 40, deletions: 0}]),
-            comments,
-            target: {owner: "o", repo: "r", issueNumber: 8},
-            now: fixedNow,
-            logGroup: vi.fn(),
-        });
+        await runComment(
+            {comments, target: {owner: "o", repo: "r", issueNumber: 8}, now: fixedNow},
+            computeResult({
+                issueNumber: 8,
+                size: {effectiveLines: 40, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+                price: {lowerMinutes: 5, upperMinutes: 12, tier: "green", sessionFlag: false, splitNudge: false},
+            }),
+        );
         expect(comments.updateComment).toHaveBeenCalledTimes(1);
         const body: string = comments.updateComment.mock.calls[0][0].body;
         expect(body).not.toMatch(/(down|up) from/);

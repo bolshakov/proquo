@@ -35,6 +35,10 @@ smaller PRs.
 
 ## Usage
 
+ProQuo runs in two parts, so it works correctly on pull requests from forks (GitHub always forces
+the automatic `GITHUB_TOKEN` to read-only for `pull_request`-triggered runs on fork PRs, so a single
+job can never both read the PR and write a comment on it):
+
 ```yaml
 name: 🏷️ ProQuo
 on:
@@ -42,7 +46,7 @@ on:
     types: [opened, synchronize, reopened]
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
 jobs:
   price:
     name: Review Price Tag
@@ -51,12 +55,48 @@ jobs:
       - uses: bolshakov/proquo@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proquo-result
+          path: proquo-result.json
 ```
 
-Every run also logs a full calculation breakdown — per-file exclusion reasons, weights and whether they
-came from `.proquo.yml` or a built-in default, and comment down-weighting — under a collapsed
-"proquo: calculation breakdown" group in the workflow run's log. It doesn't appear in the PR comment
-itself; expand the group in the Actions log when a result needs double-checking.
+```yaml
+name: 🏷️ ProQuo Comment
+on:
+  workflow_run:
+    workflows: ["🏷️ ProQuo"]
+    types: [completed]
+permissions:
+  pull-requests: write
+  actions: read
+jobs:
+  comment:
+    name: Post Price Tag Comment
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: proquo-result
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: bolshakov/proquo@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+Pin `actions/upload-artifact` and `actions/download-artifact` to a specific commit SHA in your own
+workflow if your repo's supply-chain policy expects that.
+
+The second workflow's `comment` job always runs the trusted published `bolshakov/proquo@...` ref —
+never point it at a local/checked-out action reference, since that job is the one holding a
+write-capable token.
+
+Every `compute` run also logs a full calculation breakdown — per-file exclusion reasons, weights and
+whether they came from `.proquo.yml` or a built-in default, and comment down-weighting — under a
+collapsed "proquo: calculation breakdown" group in the workflow run's log. It doesn't appear in the
+PR comment itself; expand the group in the Actions log when a result needs double-checking.
 
 ## Local CLI
 
