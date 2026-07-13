@@ -38,7 +38,7 @@ smaller PRs.
 ```yaml
 name: 🏷️ ProQuo
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
 permissions:
   contents: read       # read .proquo.yml config from a checkout (built-in defaults apply if absent)
@@ -49,10 +49,20 @@ jobs:
     name: Review Price Tag
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: bolshakov/proquo@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+Use `pull_request_target`, not `pull_request`: GitHub forces the automatic `GITHUB_TOKEN` to
+read-only for `pull_request`-triggered runs on pull requests from forks, so the comment/label
+steps above would fail there. `pull_request_target` runs the workflow file as committed on the
+base branch — a fork PR can never alter its steps — and ProQuo itself never checks out or
+executes anything from the PR's branch; it only reads diff metadata (file names, +/- counts,
+patches) through the GitHub API, so the elevated token this trigger provides is never handed to
+fork-authored code. Leave the `actions/checkout` step's `ref` unset so it checks out the base
+branch (the default for `pull_request_target`) rather than the fork's.
 
 Every run also logs a full calculation breakdown — per-file exclusion reasons, weights and whether they
 came from `.proquo.yml` or a built-in default, and comment down-weighting — under a collapsed
