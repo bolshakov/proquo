@@ -60,7 +60,9 @@ async function runCommentMode(octokit: ReturnType<typeof github.getOctokit>): Pr
             ),
         target,
         comments: octokit.rest.issues,
+        labels: octokit.rest.issues,
         now: () => new Date(),
+        warn: (message) => core.warning(message),
     });
 
     switch (outcome.status) {

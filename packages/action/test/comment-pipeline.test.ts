@@ -20,6 +20,23 @@ function makeComments(initial: {id: number; body: string} | null = null) {
     };
 }
 
+function makeLabels(initial: string[] = []) {
+    let current = [...initial];
+    return {
+        listLabelsOnIssue: vi.fn().mockImplementation(async () => ({data: current.map((name) => ({name}))})),
+        addLabels: vi.fn().mockImplementation(async ({labels}: {labels: string[]}) => {
+            current = [...current, ...labels];
+            return {};
+        }),
+        removeLabel: vi.fn().mockImplementation(async ({name}: {name: string}) => {
+            current = current.filter((n) => n !== name);
+            return {};
+        }),
+        createLabel: vi.fn().mockResolvedValue({}),
+        updateLabel: vi.fn().mockResolvedValue({}),
+    };
+}
+
 function computeResult(overrides: Partial<ComputeResult> = {}): ComputeResult {
     return {
         version: 1,
@@ -53,7 +70,9 @@ describe("runCommentPipeline", () => {
             verify: vi.fn(),
             target,
             comments,
+            labels: makeLabels(),
             now: fixedNow,
+            warn: vi.fn(),
         });
         expect(outcome).toEqual({status: "missing-artifact"});
         expect(comments.createComment).not.toHaveBeenCalled();
@@ -70,7 +89,9 @@ describe("runCommentPipeline", () => {
             verify: vi.fn(),
             target,
             comments,
+            labels: makeLabels(),
             now: fixedNow,
+            warn: vi.fn(),
         });
         expect(outcome).toEqual({status: "malformed-artifact"});
         expect(contents).not.toHaveBeenCalled();
@@ -84,7 +105,9 @@ describe("runCommentPipeline", () => {
             verify: vi.fn(),
             target,
             comments,
+            labels: makeLabels(),
             now: fixedNow,
+            warn: vi.fn(),
         });
         expect(outcome).toEqual({status: "malformed-artifact"});
         expect(comments.createComment).not.toHaveBeenCalled();
@@ -100,7 +123,9 @@ describe("runCommentPipeline", () => {
             verify,
             target,
             comments,
+            labels: makeLabels(),
             now: fixedNow,
+            warn: vi.fn(),
         });
         expect(outcome).toEqual({status: "unverified", issueNumber: 758, headSha: "abc123"});
         expect(verify).toHaveBeenCalledWith(target, 758);
@@ -117,7 +142,9 @@ describe("runCommentPipeline", () => {
             verify,
             target,
             comments,
+            labels: makeLabels(),
             now: fixedNow,
+            warn: vi.fn(),
         });
         expect(outcome).toEqual({status: "posted"});
         expect(comments.createComment).toHaveBeenCalledTimes(1);

@@ -1,6 +1,7 @@
 import {parseComputeResult} from "./result";
 import {runComment, type CommentDeps} from "./run";
 import type {IssueCommentsApi} from "./sticky";
+import type {IssuesLabelsApi} from "./labels";
 
 export const MAX_ARTIFACT_BYTES = 16 * 1024;
 
@@ -21,7 +22,9 @@ export interface CommentPipelineDeps {
     verify(target: {owner: string; repo: string; headSha: string}, issueNumber: number): Promise<boolean>;
     target: {owner: string; repo: string; headSha: string};
     comments: IssueCommentsApi;
+    labels: IssuesLabelsApi;
     now: () => Date;
+    warn(message: string): void;
 }
 
 export async function runCommentPipeline(deps: CommentPipelineDeps): Promise<CommentPipelineOutcome> {
@@ -54,8 +57,10 @@ export async function runCommentPipeline(deps: CommentPipelineDeps): Promise<Com
 
     const commentDeps: CommentDeps = {
         comments: deps.comments,
+        labels: deps.labels,
         target: {owner: deps.target.owner, repo: deps.target.repo, issueNumber: result.issueNumber},
         now: deps.now,
+        warn: deps.warn,
     };
     await runComment(commentDeps, result);
     return {status: "posted"};

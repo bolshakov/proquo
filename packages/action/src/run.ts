@@ -1,6 +1,7 @@
 import {buildPriceHistory, parsePriceHistory, renderComment, snapshotFrom} from "./comment";
 import {price, explainSize, loadConfig, renderBreakdown, type PrFile} from "@proquo/core";
 import {findStickyComment, upsertStickyComment, type IssueCommentsApi} from "./sticky";
+import {syncTierLabel, type IssuesLabelsApi} from "./labels";
 import type {ComputeResult} from "./result";
 
 export interface ComputeDeps {
@@ -21,8 +22,10 @@ export async function runCompute(deps: ComputeDeps): Promise<ComputeResult> {
 
 export interface CommentDeps {
     comments: IssueCommentsApi;
+    labels: IssuesLabelsApi;
     target: {owner: string; repo: string; issueNumber: number};
     now: () => Date;
+    warn(message: string): void;
 }
 
 export async function runComment(deps: CommentDeps, result: ComputeResult): Promise<void> {
@@ -33,4 +36,10 @@ export async function runComment(deps: CommentDeps, result: ComputeResult): Prom
     const previousPrice = existingHistory?.current ?? null;
     const body = renderComment(result.size, result.price, history, previousPrice);
     await upsertStickyComment(deps.comments, deps.target, body, existing);
+
+    try {
+        await syncTierLabel(deps.labels, deps.target, result.price.tier);
+    } catch (error) {
+        deps.warn(`proquo: failed to sync tier label — ${error instanceof Error ? error.message : String(error)}`);
+    }
 }

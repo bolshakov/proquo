@@ -23,6 +23,23 @@ function makeComments(initial: {id: number; body: string} | null = null) {
     };
 }
 
+function makeLabels(initial: string[] = []) {
+    let current = [...initial];
+    return {
+        listLabelsOnIssue: vi.fn().mockImplementation(async () => ({data: current.map((name) => ({name}))})),
+        addLabels: vi.fn().mockImplementation(async ({labels}: {labels: string[]}) => {
+            current = [...current, ...labels];
+            return {};
+        }),
+        removeLabel: vi.fn().mockImplementation(async ({name}: {name: string}) => {
+            current = current.filter((n) => n !== name);
+            return {};
+        }),
+        createLabel: vi.fn().mockResolvedValue({}),
+        updateLabel: vi.fn().mockResolvedValue({}),
+    };
+}
+
 function computeResult(overrides: Partial<ComputeResult> = {}): ComputeResult {
     return {
         version: 1,
@@ -37,7 +54,7 @@ describe("runComment", () => {
     it("creates the sticky comment from a ComputeResult", async () => {
         const comments = makeComments();
         await runComment(
-            {comments, target: {owner: "o", repo: "r", issueNumber: 3}, now: fixedNow},
+            {comments, labels: makeLabels(), target: {owner: "o", repo: "r", issueNumber: 3}, now: fixedNow, warn: vi.fn()},
             computeResult(),
         );
         expect(comments.createComment).toHaveBeenCalledTimes(1);
@@ -64,7 +81,7 @@ describe("runComment", () => {
         );
         const comments = makeComments({id: 42, body: oldBody});
         await runComment(
-            {comments, target: {owner: "o", repo: "r", issueNumber: 3}, now: fixedNow},
+            {comments, labels: makeLabels(), target: {owner: "o", repo: "r", issueNumber: 3}, now: fixedNow, warn: vi.fn()},
             computeResult({size: {effectiveLines: 100, excludedLines: 0, excludedFiles: 0, pricedFiles: 1}}),
         );
         expect(comments.listComments).toHaveBeenCalledTimes(1);
@@ -79,7 +96,7 @@ describe("runComment", () => {
         const target = {owner: "o", repo: "r", issueNumber: 7};
 
         await runComment(
-            {comments, target, now: () => new Date("2024-01-01T00:00:00.000Z")},
+            {comments, labels: makeLabels(), target, now: () => new Date("2024-01-01T00:00:00.000Z"), warn: vi.fn()},
             computeResult({
                 issueNumber: 7,
                 size: {effectiveLines: 300, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
@@ -87,7 +104,7 @@ describe("runComment", () => {
             }),
         );
         await runComment(
-            {comments, target, now: () => new Date("2024-01-02T00:00:00.000Z")},
+            {comments, labels: makeLabels(), target, now: () => new Date("2024-01-02T00:00:00.000Z"), warn: vi.fn()},
             computeResult({
                 issueNumber: 7,
                 size: {effectiveLines: 100, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
@@ -113,7 +130,7 @@ describe("runComment", () => {
         ].join("\n");
         const comments = makeComments({id: 9, body: legacyBody});
         await runComment(
-            {comments, target: {owner: "o", repo: "r", issueNumber: 8}, now: fixedNow},
+            {comments, labels: makeLabels(), target: {owner: "o", repo: "r", issueNumber: 8}, now: fixedNow, warn: vi.fn()},
             computeResult({
                 issueNumber: 8,
                 size: {effectiveLines: 40, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
@@ -126,5 +143,37 @@ describe("runComment", () => {
         const history = parsePriceHistory(body)!;
         expect(history.revisions).toBe(1);
         expect(history.first).toEqual(history.current);
+    });
+
+    it("syncs the PR's tier label to the computed price tier", async () => {
+        const comments = makeComments();
+        const labels = makeLabels();
+        await runComment(
+            {comments, labels, target: {owner: "o", repo: "r", issueNumber: 3}, now: fixedNow, warn: vi.fn()},
+            computeResult({
+                size: {effectiveLines: 900, excludedLines: 0, excludedFiles: 0, pricedFiles: 1},
+                price: {lowerMinutes: 108, upperMinutes: 270, tier: "red", sessionFlag: true, splitNudge: true},
+            }),
+        );
+        expect(labels.addLabels).toHaveBeenCalledWith({
+            owner: "o",
+            repo: "r",
+            issue_number: 3,
+            labels: ["proquo: large"],
+        });
+    });
+
+    it("warns but does not fail the run when label sync throws", async () => {
+        const comments = makeComments();
+        const labels = makeLabels();
+        labels.listLabelsOnIssue.mockRejectedValue(new Error("boom"));
+        const warn = vi.fn();
+        await runComment(
+            {comments, labels, target: {owner: "o", repo: "r", issueNumber: 3}, now: fixedNow, warn},
+            computeResult(),
+        );
+        expect(comments.createComment).toHaveBeenCalledTimes(1);
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn.mock.calls[0][0]).toContain("boom");
     });
 });
