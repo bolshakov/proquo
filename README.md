@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: bolshakov/proquo@v1
+      - uses: bolshakov/proquo@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
