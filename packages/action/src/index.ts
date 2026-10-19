@@ -28,6 +28,7 @@ async function main(): Promise<void> {
             core.endGroup();
         },
         warn: (message) => core.warning(message),
+        fail: (message) => core.setFailed(message),
     });
 }
 

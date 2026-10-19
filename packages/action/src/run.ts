@@ -1,5 +1,5 @@
 import {buildPriceHistory, parsePriceHistory, renderComment, snapshotFrom} from "./comment";
-import {price, explainSize, loadConfig, renderBreakdown, type PrFile} from "@proquo/core";
+import {price, explainSize, loadConfig, reachesFailOn, renderBreakdown, type PrFile} from "@proquo/core";
 import {findStickyComment, upsertStickyComment, type IssueCommentsApi} from "./sticky";
 import {syncTierLabel, type IssuesLabelsApi} from "./labels";
 
@@ -12,6 +12,7 @@ export interface RunDeps {
     now: () => Date;
     logGroup(title: string, lines: string[]): void;
     warn(message: string): void;
+    fail(message: string): void;
 }
 
 export async function run(deps: RunDeps): Promise<void> {
@@ -33,5 +34,12 @@ export async function run(deps: RunDeps): Promise<void> {
         await syncTierLabel(deps.labels, deps.target, computedPrice.tier);
     } catch (error) {
         deps.warn(`proquo: failed to sync tier label — ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    if (reachesFailOn(computedPrice.tier, config.failOn)) {
+        deps.fail(
+            `proquo: ${size.effectiveLines} effective lines puts this pull request ` +
+                `in the ${computedPrice.tier} tier, and .proquo.yml sets failOn: ${config.failOn}`,
+        );
     }
 }
