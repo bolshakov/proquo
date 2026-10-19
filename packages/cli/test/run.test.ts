@@ -1,4 +1,7 @@
-import {describe, expect, it, vi} from "vitest";
+import {mkdtempSync, rmSync, writeFileSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
+import {afterEach, describe, expect, it, vi} from "vitest";
 import {run} from "../src/run";
 
 describe("run", () => {
@@ -84,5 +87,38 @@ describe("run", () => {
         });
         const output: string = stdout.mock.calls[0][0];
         expect(output).not.toContain("Config:");
+    });
+});
+
+describe("run - failOn", () => {
+    let dir: string;
+
+    afterEach(() => {
+        if (dir) rmSync(dir, {recursive: true, force: true});
+    });
+
+    function runIn(config: string | null, numstat: string) {
+        dir = mkdtempSync(join(tmpdir(), "proquo-cli-"));
+        if (config !== null) writeFileSync(join(dir, ".proquo.yml"), config);
+        const stdout = vi.fn();
+        const exitCode = run({gitNumstat: () => numstat, gitFullDiff: () => "", cwd: dir, range: undefined, stdout});
+        return {exitCode, output: stdout.mock.calls.map((call) => call[0]).join("")};
+    }
+
+    it("exits 1 and says why when the diff reaches the failOn tier", () => {
+        const {exitCode, output} = runIn("failOn: red\n", "450\t0\tsrc/a.ts\n");
+        expect(exitCode).toBe(1);
+        expect(output).toContain("450 effective lines");
+        expect(output).toContain("failOn: red");
+    });
+
+    it("exits 0 when the diff stays below the failOn tier", () => {
+        const {exitCode, output} = runIn("failOn: red\n", "300\t0\tsrc/a.ts\n");
+        expect(exitCode).toBe(0);
+        expect(output).not.toContain("failOn");
+    });
+
+    it("exits 0 on a red diff when failOn is not set", () => {
+        expect(runIn(null, "450\t0\tsrc/a.ts\n").exitCode).toBe(0);
     });
 });

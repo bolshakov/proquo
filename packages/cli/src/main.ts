@@ -21,7 +21,7 @@ function gitFullDiff(range: string | undefined): string {
 
 function main(): void {
     const {range, explain} = parseArgs(process.argv.slice(2));
-    run({
+    process.exitCode = run({
         gitNumstat,
         gitFullDiff,
         cwd: process.cwd(),
