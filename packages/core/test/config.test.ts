@@ -131,3 +131,30 @@ describe("loadConfig", () => {
         expect(() => loadConfig(dir)).toThrow();
     });
 });
+
+describe("parseConfigFile - failOn", () => {
+    it("parses failOn red and yellow", () => {
+        expect(parseConfigFile("failOn: red\n").failOn).toBe("red");
+        expect(parseConfigFile("failOn: yellow\n").failOn).toBe("yellow");
+    });
+
+    it("leaves failOn undefined when absent", () => {
+        expect(parseConfigFile("").failOn).toBeUndefined();
+    });
+
+    it("throws when failOn is not red or yellow", () => {
+        expect(() => parseConfigFile("failOn: green\n")).toThrow(/failOn/);
+        expect(() => parseConfigFile("failOn: 400\n")).toThrow(/failOn/);
+    });
+});
+
+describe("mergeConfig - failOn", () => {
+    it("keeps the user's failOn", () => {
+        expect(mergeConfig({exclude: [], weights: [], failOn: "yellow"}).failOn).toBe("yellow");
+    });
+
+    it("never fails by default", () => {
+        expect(DEFAULT_CONFIG.failOn).toBeUndefined();
+        expect(mergeConfig({exclude: [], weights: []}).failOn).toBeUndefined();
+    });
+});
