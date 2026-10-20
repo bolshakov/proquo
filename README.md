@@ -95,6 +95,25 @@ its contribution:
 node packages/cli/bin/proquo.mjs --explain main...HEAD
 ```
 
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | The diff was priced, and it is below `failOn`, or `failOn` is not set. |
+| `1` | The diff reached the `failOn` tier. The last line of the report names the tier. |
+| `2` | ProQuo could not run, such as on an invalid `.proquo.yml` or a bad git range. One `proquo:` line on stderr says why. |
+
+So with `failOn` in `.proquo.yml`, the CLI works as a git hook. This `.git/hooks/pre-push` stops a push that reached
+`failOn`, but lets the push through when ProQuo itself cannot run:
+
+```sh
+#!/bin/sh
+node path/to/proquo/packages/cli/bin/proquo.mjs origin/main...HEAD
+[ $? -ne 1 ]
+```
+
+Drop the last line to stop the push on code `2` as well.
+
 ## How the price is computed
 
 - Effective size = added + deleted lines, excluding lockfiles, vendored/build/generated paths, and minified
