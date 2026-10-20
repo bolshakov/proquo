@@ -13,6 +13,7 @@ describe("run", () => {
             cwd: process.cwd(),
             range: undefined,
             stdout,
+            stderr: vi.fn(),
         });
         expect(stdout).toHaveBeenCalledTimes(1);
         const output: string = stdout.mock.calls[0][0];
@@ -25,7 +26,7 @@ describe("run", () => {
     it("passes the requested range to git", () => {
         const gitNumstat = vi.fn().mockReturnValue("");
         const gitFullDiff = vi.fn().mockReturnValue("");
-        run({gitNumstat, gitFullDiff, cwd: process.cwd(), range: "main...HEAD", stdout: vi.fn()});
+        run({gitNumstat, gitFullDiff, cwd: process.cwd(), range: "main...HEAD", stdout: vi.fn(), stderr: vi.fn()});
         expect(gitNumstat).toHaveBeenCalledWith("main...HEAD");
         expect(gitFullDiff).toHaveBeenCalledWith("main...HEAD");
     });
@@ -33,7 +34,7 @@ describe("run", () => {
     it("requests the working-tree diff when no range is given", () => {
         const gitNumstat = vi.fn().mockReturnValue("");
         const gitFullDiff = vi.fn().mockReturnValue("");
-        run({gitNumstat, gitFullDiff, cwd: process.cwd(), range: undefined, stdout: vi.fn()});
+        run({gitNumstat, gitFullDiff, cwd: process.cwd(), range: undefined, stdout: vi.fn(), stderr: vi.fn()});
         expect(gitNumstat).toHaveBeenCalledWith(undefined);
         expect(gitFullDiff).toHaveBeenCalledWith(undefined);
     });
@@ -53,6 +54,7 @@ describe("run", () => {
             cwd: process.cwd(),
             range: undefined,
             stdout,
+            stderr: vi.fn(),
         });
         const output: string = stdout.mock.calls[0][0];
         expect(output).toContain("No effective source changes");
@@ -67,6 +69,7 @@ describe("run", () => {
             range: undefined,
             explain: true,
             stdout,
+            stderr: vi.fn(),
         });
         expect(stdout).toHaveBeenCalledTimes(1);
         const output: string = stdout.mock.calls[0][0];
@@ -84,6 +87,7 @@ describe("run", () => {
             cwd: process.cwd(),
             range: undefined,
             stdout,
+            stderr: vi.fn(),
         });
         const output: string = stdout.mock.calls[0][0];
         expect(output).not.toContain("Config:");
@@ -101,7 +105,7 @@ describe("run - failOn", () => {
         dir = mkdtempSync(join(tmpdir(), "proquo-cli-"));
         if (config !== null) writeFileSync(join(dir, ".proquo.yml"), config);
         const stdout = vi.fn();
-        const exitCode = run({gitNumstat: () => numstat, gitFullDiff: () => "", cwd: dir, range: undefined, stdout});
+        const exitCode = run({gitNumstat: () => numstat, gitFullDiff: () => "", cwd: dir, range: undefined, stdout, stderr: vi.fn()});
         return {exitCode, output: stdout.mock.calls.map((call) => call[0]).join("")};
     }
 
@@ -120,5 +124,40 @@ describe("run - failOn", () => {
 
     it("exits 0 on a red diff when failOn is not set", () => {
         expect(runIn(null, "450\t0\tsrc/a.ts\n").exitCode).toBe(0);
+    });
+});
+
+describe("run - errors", () => {
+    let dir: string;
+
+    afterEach(() => {
+        if (dir) rmSync(dir, {recursive: true, force: true});
+    });
+
+    it("exits 2 with one line on stderr when .proquo.yml is invalid", () => {
+        dir = mkdtempSync(join(tmpdir(), "proquo-cli-"));
+        writeFileSync(join(dir, ".proquo.yml"), "failOn: blue\n");
+        const stdout = vi.fn();
+        const stderr = vi.fn();
+        const exitCode = run({gitNumstat: () => "", gitFullDiff: () => "", cwd: dir, range: undefined, stdout, stderr});
+        expect(exitCode).toBe(2);
+        expect(stdout).not.toHaveBeenCalled();
+        expect(stderr).toHaveBeenCalledWith("proquo: .proquo.yml: `failOn` must be `red` or `yellow`\n");
+    });
+
+    it("exits 2 with one line on stderr when git fails", () => {
+        const stderr = vi.fn();
+        const exitCode = run({
+            gitNumstat: () => {
+                throw new Error("fatal: bad revision 'nosuchref'");
+            },
+            gitFullDiff: () => "",
+            cwd: process.cwd(),
+            range: "nosuchref",
+            stdout: vi.fn(),
+            stderr,
+        });
+        expect(exitCode).toBe(2);
+        expect(stderr).toHaveBeenCalledWith("proquo: fatal: bad revision 'nosuchref'\n");
     });
 });

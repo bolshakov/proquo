@@ -11,9 +11,20 @@ export interface RunDeps {
     range: string | undefined;
     explain?: boolean;
     stdout(text: string): void;
+    stderr(text: string): void;
 }
 
 export function run(deps: RunDeps): number {
+    try {
+        return priceDiff(deps);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        deps.stderr(`proquo: ${message.split("\n")[0]}\n`);
+        return 2;
+    }
+}
+
+function priceDiff(deps: RunDeps): number {
     const config = loadConfig(deps.cwd);
     const files = parseNumstat(deps.gitNumstat(deps.range));
     const patches = splitPatches(deps.gitFullDiff(deps.range));

@@ -28,6 +28,7 @@ function main(): void {
         range,
         explain,
         stdout: (text) => process.stdout.write(text),
+        stderr: (text) => process.stderr.write(text),
     });
 }
 

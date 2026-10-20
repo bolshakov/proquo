@@ -144,7 +144,8 @@ failOn: red
   used, unchanged.
 - `failOn`: `red` or `yellow`. When a pull request reaches that tier or above, the Action fails its check after it
   posts the comment and the label, and the CLI exits with status 1. `yellow` fails on yellow and red. Leave it out and
-  ProQuo never fails.
+  ProQuo never fails. The CLI exits with status 2 when ProQuo itself cannot run, such as on an invalid `.proquo.yml`
+  or a bad git range, so a hook can tell that apart from a diff that reached `failOn`.
 
 ## Research
 
