@@ -1,4 +1,7 @@
-import {describe, expect, it, vi} from "vitest";
+import {mkdtempSync, rmSync, writeFileSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
+import {afterEach, describe, expect, it, vi} from "vitest";
 import {run} from "../src/run";
 import {MARKER, parsePriceHistory, renderComment, type PriceHistory} from "../src/comment";
 
@@ -230,5 +233,53 @@ describe("run", () => {
         expect(comments.createComment).toHaveBeenCalledTimes(1);
         expect(warn).toHaveBeenCalledTimes(1);
         expect(warn.mock.calls[0][0]).toContain("boom");
+    });
+});
+
+describe("run - failOn", () => {
+    let dir: string;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        if (dir) rmSync(dir, {recursive: true, force: true});
+    });
+
+    async function runIn(config: string | null, additions: number) {
+        dir = mkdtempSync(join(tmpdir(), "proquo-action-"));
+        if (config !== null) writeFileSync(join(dir, ".proquo.yml"), config);
+        vi.spyOn(process, "cwd").mockReturnValue(dir);
+        const comments = makeComments();
+        const labels = makeLabels();
+        const fail = vi.fn();
+        await run({
+            listPrFiles: vi.fn().mockResolvedValue([{filename: "src/a.ts", additions, deletions: 0}]),
+            comments,
+            labels,
+            target: {owner: "o", repo: "r", issueNumber: 3},
+            now: fixedNow,
+            logGroup: vi.fn(),
+            warn: vi.fn(),
+            fail,
+        });
+        return {comments, labels, fail};
+    }
+
+    it("fails the run after posting the comment and label when the PR reaches the failOn tier", async () => {
+        const {comments, labels, fail} = await runIn("failOn: yellow\n", 300);
+        expect(comments.createComment).toHaveBeenCalledTimes(1);
+        expect(labels.addLabels).toHaveBeenCalled();
+        expect(fail).toHaveBeenCalledTimes(1);
+        expect(fail.mock.calls[0][0]).toContain("300 effective lines");
+        expect(fail.mock.calls[0][0]).toContain("failOn: yellow");
+    });
+
+    it("does not fail when the PR stays below the failOn tier", async () => {
+        const {fail} = await runIn("failOn: red\n", 300);
+        expect(fail).not.toHaveBeenCalled();
+    });
+
+    it("does not fail a red PR when failOn is not set", async () => {
+        const {fail} = await runIn(null, 450);
+        expect(fail).not.toHaveBeenCalled();
     });
 });

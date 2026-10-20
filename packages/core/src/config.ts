@@ -1,6 +1,7 @@
 import {existsSync, readFileSync} from "node:fs";
 import {join} from "node:path";
 import {parse} from "yaml";
+import type {FailOn} from "./pricing";
 
 export interface WeightRule {
     pattern: string;
@@ -11,6 +12,7 @@ export interface ProquoConfig {
     exclude: string[];
     weights: WeightRule[];
     commentWeight: number;
+    failOn?: FailOn;
 }
 
 const DEFAULT_EXCLUDE = [
@@ -64,6 +66,7 @@ interface RawConfig {
     exclude?: unknown;
     weights?: unknown;
     commentWeight?: unknown;
+    failOn?: unknown;
 }
 
 function validateExclude(raw: unknown): string[] {
@@ -103,12 +106,26 @@ function validateCommentWeight(raw: unknown): number | undefined {
     return raw as number;
 }
 
-export function parseConfigFile(raw: string): {exclude: string[]; weights: WeightRule[]; commentWeight?: number} {
+function validateFailOn(raw: unknown): FailOn | undefined {
+    if (raw === undefined) return undefined;
+    if (raw !== "red" && raw !== "yellow") {
+        throw new Error(".proquo.yml: `failOn` must be `red` or `yellow`");
+    }
+    return raw;
+}
+
+export function parseConfigFile(raw: string): {
+    exclude: string[];
+    weights: WeightRule[];
+    commentWeight?: number;
+    failOn?: FailOn;
+} {
     const parsed = (parse(raw) ?? {}) as RawConfig;
     return {
         exclude: validateExclude(parsed.exclude),
         weights: validateWeights(parsed.weights),
         commentWeight: validateCommentWeight(parsed.commentWeight),
+        failOn: validateFailOn(parsed.failOn),
     };
 }
 
@@ -116,11 +133,13 @@ export function mergeConfig(userConfig: {
     exclude: string[];
     weights: WeightRule[];
     commentWeight?: number;
+    failOn?: FailOn;
 }): ProquoConfig {
     return {
         exclude: [...DEFAULT_CONFIG.exclude, ...userConfig.exclude],
         weights: [...userConfig.weights, ...DEFAULT_CONFIG.weights],
         commentWeight: userConfig.commentWeight ?? DEFAULT_CONFIG.commentWeight,
+        failOn: userConfig.failOn,
     };
 }
 

@@ -1,4 +1,4 @@
-export {price, type Price, type Tier} from "./pricing";
+export {price, reachesFailOn, type FailOn, type Price, type Tier} from "./pricing";
 export {effectiveSize, type PrFile, type SizeResult} from "./size";
 export {isExcluded, weightFor} from "./exclusions";
 export {explainSize, type FileBreakdown, type SizeExplanation} from "./explain";

@@ -1,4 +1,4 @@
-import {explainSize, loadConfig, price, renderBreakdown} from "@proquo/core";
+import {explainSize, loadConfig, price, reachesFailOn, renderBreakdown} from "@proquo/core";
 import {parseNumstat, splitPatches} from "./diff";
 import {renderReport} from "./report";
 
@@ -11,16 +11,33 @@ export interface RunDeps {
     range: string | undefined;
     explain?: boolean;
     stdout(text: string): void;
+    stderr(text: string): void;
 }
 
-export function run(deps: RunDeps): void {
+export function run(deps: RunDeps): number {
+    try {
+        return priceDiff(deps);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        deps.stderr(`proquo: ${message.split("\n")[0]}\n`);
+        return 2;
+    }
+}
+
+function priceDiff(deps: RunDeps): number {
     const config = loadConfig(deps.cwd);
     const files = parseNumstat(deps.gitNumstat(deps.range));
     const patches = splitPatches(deps.gitFullDiff(deps.range));
     const filesWithPatches = files.map((file) => ({...file, patch: patches.get(file.filename)}));
 
     const explanation = explainSize(filesWithPatches, config);
-    const report = renderReport(explanation.size, price(explanation.size.effectiveLines));
+    const computedPrice = price(explanation.size.effectiveLines);
+    const report = renderReport(explanation.size, computedPrice);
     const output = deps.explain ? `${renderBreakdown(explanation).join("\n")}\n\n${report}` : report;
-    deps.stdout(output + "\n");
+    const fails = reachesFailOn(computedPrice.tier, config.failOn);
+    const failLine = fails
+        ? `\n\nproquo: this diff is in the ${computedPrice.tier} tier, and .proquo.yml sets failOn: ${config.failOn}`
+        : "";
+    deps.stdout(output + failLine + "\n");
+    return fails ? 1 : 0;
 }

@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {price} from "../src/pricing";
+import {price, reachesFailOn} from "../src/pricing";
 
 describe("price", () => {
     it("prices an empty diff at zero with no flags", () => {
@@ -76,5 +76,23 @@ describe("price", () => {
             sessionFlag: true,
             splitNudge: true,
         });
+    });
+});
+
+describe("reachesFailOn", () => {
+    it("never fails without a failOn tier", () => {
+        expect(reachesFailOn("red", undefined)).toBe(false);
+    });
+
+    it("fails on red only when failOn is red", () => {
+        expect(reachesFailOn("green", "red")).toBe(false);
+        expect(reachesFailOn("yellow", "red")).toBe(false);
+        expect(reachesFailOn("red", "red")).toBe(true);
+    });
+
+    it("fails on yellow and red when failOn is yellow", () => {
+        expect(reachesFailOn("green", "yellow")).toBe(false);
+        expect(reachesFailOn("yellow", "yellow")).toBe(true);
+        expect(reachesFailOn("red", "yellow")).toBe(true);
     });
 });

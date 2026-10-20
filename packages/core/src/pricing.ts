@@ -38,3 +38,11 @@ export function price(effectiveLines: number): Price {
         splitNudge: tier === "red",
     };
 }
+
+export type FailOn = Exclude<Tier, "green">;
+
+const TIER_RANK: Record<Tier, number> = {green: 0, yellow: 1, red: 2};
+
+export function reachesFailOn(tier: Tier, failOn: FailOn | undefined): boolean {
+    return failOn !== undefined && TIER_RANK[tier] >= TIER_RANK[failOn];
+}

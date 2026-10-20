@@ -95,6 +95,25 @@ its contribution:
 node packages/cli/bin/proquo.mjs --explain main...HEAD
 ```
 
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | The diff was priced, and it is below `failOn`, or `failOn` is not set. |
+| `1` | The diff reached the `failOn` tier. The last line of the report names the tier. |
+| `2` | ProQuo could not run, such as on an invalid `.proquo.yml` or a bad git range. One `proquo:` line on stderr says why. |
+
+So with `failOn` in `.proquo.yml`, the CLI works as a git hook. This `.git/hooks/pre-push` stops a push that reached
+`failOn`, but lets the push through when ProQuo itself cannot run:
+
+```sh
+#!/bin/sh
+node path/to/proquo/packages/cli/bin/proquo.mjs origin/main...HEAD
+[ $? -ne 1 ]
+```
+
+Drop the last line to stop the push on code `2` as well.
+
 ## How the price is computed
 
 - Effective size = added + deleted lines, excluding lockfiles, vendored/build/generated paths, and minified
@@ -126,6 +145,8 @@ weights:
     weight: 0.3
 
 commentWeight: 0.3
+
+failOn: red
 ```
 
 - `exclude`: extra glob patterns added to the built-in defaults (lockfiles, `node_modules`, `vendor`,
@@ -140,6 +161,10 @@ commentWeight: 0.3
   Defaults to `0.3`. Only applied when line-level diff content is available, the file's language
   is recognized, and the patch data is complete; otherwise the file's ordinary per-file weight is
   used, unchanged.
+- `failOn`: `red` or `yellow`. When a pull request reaches that tier or above, the Action fails its check after it
+  posts the comment and the label, and the CLI exits with status 1. `yellow` fails on yellow and red. Leave it out and
+  ProQuo never fails. The CLI exits with status 2 when ProQuo itself cannot run, such as on an invalid `.proquo.yml`
+  or a bad git range, so a hook can tell that apart from a diff that reached `failOn`.
 
 ## Research
 
