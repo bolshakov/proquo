@@ -29,4 +29,12 @@ describe("parseArgs", () => {
     it("does not take --version for a range", () => {
         expect(parseArgs(["--version", "main...HEAD"])).toEqual({range: "main...HEAD", explain: false, version: true});
     });
+
+    it("detects --version after the range argument", () => {
+        expect(parseArgs(["main...HEAD", "--version"])).toEqual({range: "main...HEAD", explain: false, version: true});
+    });
+
+    it("detects --explain and --version together without taking either for a range", () => {
+        expect(parseArgs(["--explain", "--version"])).toEqual({range: undefined, explain: true, version: true});
+    });
 });

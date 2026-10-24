@@ -1,4 +1,4 @@
-import {readdirSync, readFileSync} from "node:fs";
+import {readdirSync, readFileSync, realpathSync} from "node:fs";
 import {join} from "node:path";
 import {fileURLToPath} from "node:url";
 
@@ -21,12 +21,14 @@ function readManifests(root) {
     const packagesDir = join(root, "packages");
     const paths = [
         join(root, "package.json"),
-        ...readdirSync(packagesDir).map((dir) => join(packagesDir, dir, "package.json")),
+        ...readdirSync(packagesDir, {withFileTypes: true})
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => join(packagesDir, entry.name, "package.json")),
     ];
     return paths.map((path) => JSON.parse(readFileSync(path, "utf8")));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
     const root = fileURLToPath(new URL("..", import.meta.url));
     const problems = versionProblems(process.argv[2], readManifests(root));
     for (const problem of problems) console.error(`::error::${problem}`);
