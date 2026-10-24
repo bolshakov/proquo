@@ -9,7 +9,8 @@
   "scripts": {
     "test": "vitest run",
     "lint": "tsc --noEmit",
-    "build": "npm run build --workspace @proquo/action"
+    "build": "npm run build --workspace @proquo/action",
+    "check-version": "node scripts/check-version.mjs"
   },
   "license": "MIT",
   "devDependencies": {

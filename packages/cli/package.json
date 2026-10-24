@@ -1,5 +1,5 @@
 {
-  "name": "@proquo/cli",
+  "name": "proquo",
   "version": "2.1.0",
   "description": "ProQuo command-line interface — price a local git diff in reviewer minutes",
   "license": "MIT",
@@ -7,9 +7,25 @@
     "proquo": "bin/proquo.mjs"
   },
   "scripts": {
-    "build": "node build.mjs && chmod +x bin/proquo.mjs"
+    "build": "node build.mjs && chmod +x bin/proquo.mjs",
+    "prepublishOnly": "npm run build"
   },
-  "dependencies": {
+  "files": [
+    "bin"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bolshakov/proquo.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
     "@proquo/core": "*"
   }
 }
