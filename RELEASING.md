@@ -16,21 +16,6 @@ One version number covers the GitHub Action and the `proquo` npm package.
 3. The tag runs the Release workflow. It fails unless the tag matches every package version, runs the tests, checks
    that `proquo --version` prints the tag version, then publishes `proquo` to npm. Prereleases go to the `next`
    dist-tag, so `npm install proquo` keeps the last stable release.
+4. The `npm` job waits for your approval in the `release` environment before it starts.
 
 Move the floating `v2` tag by hand after a stable release. Only `vX.Y.Z` tags run the Release workflow.
-
-## First publish
-
-npm trusted publishing needs the package to exist before it can be set up, so the first release is manual:
-
-1. `npm login`, then `npm publish --workspace proquo` from a checkout of the release tag.
-2. On npmjs.com, open the `proquo` package settings and add a trusted publisher: repository `bolshakov/proquo`,
-   workflow `release.yml`, environment `release`.
-3. In the package settings, set publishing access to "Require two-factor authentication and disallow tokens", and
-   revoke any token used for the first publish. Otherwise a token can publish without this workflow.
-4. Create the `release` environment in the repository settings and add yourself under required reviewers. GitHub
-   creates a missing environment with no protection on first use, so without this step nothing stops a pushed tag
-   from publishing. There is no npm secret to guard. The approval gates the job that can request the publish
-   credential from npm.
-
-Later releases need no token. Each one waits for approval in the Actions run before the `npm` job starts.
