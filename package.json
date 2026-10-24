@@ -1,6 +1,6 @@
 {
   "name": "proquo-monorepo",
-  "version": "0.1.0",
+  "version": "2.1.0",
   "private": true,
   "description": "ProQuo — prices the review burden of every pull request",
   "workspaces": [
@@ -9,7 +9,8 @@
   "scripts": {
     "test": "vitest run",
     "lint": "tsc --noEmit",
-    "build": "npm run build --workspace @proquo/action"
+    "build": "npm run build --workspace @proquo/action",
+    "check-version": "node scripts/check-version.mjs"
   },
   "license": "MIT",
   "devDependencies": {

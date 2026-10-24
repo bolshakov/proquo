@@ -19,8 +19,14 @@ function gitFullDiff(range: string | undefined): string {
     }
 }
 
+declare const PROQUO_VERSION: string;
+
 function main(): void {
-    const {range, explain} = parseArgs(process.argv.slice(2));
+    const {range, explain, version} = parseArgs(process.argv.slice(2));
+    if (version) {
+        process.stdout.write(`${PROQUO_VERSION}\n`);
+        return;
+    }
     process.exitCode = run({
         gitNumstat,
         gitFullDiff,

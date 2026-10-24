@@ -15,8 +15,13 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm install
+      - run: npm run check-version
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - name: Verify the CLI reports its package version
+        run: |
+          npm run build --workspace proquo
+          test "$(node packages/cli/bin/proquo.mjs --version)" = "$(node -p "require('./packages/cli/package.json').version")"
       - name: Verify dist/index.mjs is up to date
         run: git diff --exit-code dist/index.mjs

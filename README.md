@@ -81,9 +81,11 @@ missing, ProQuo logs a warning in the Actions log and still posts the price comm
 Price a diff before you open the PR — a pre-push self-check:
 
 ```bash
-npm run build --workspace @proquo/cli
-node packages/cli/bin/proquo.mjs main...HEAD
+npx proquo main...HEAD
 ```
+
+Or install it once with `npm install --global proquo` and run `proquo main...HEAD`. `proquo --version` prints the
+release it came from. It always matches the GitHub Action release with the same number.
 
 With no range argument it prices the working-tree diff. The CLI and the GitHub Action share the same pricing engine (`@proquo/core`), so a diff prices identically whether you check it locally or in CI.
 
@@ -92,7 +94,7 @@ and whether it came from `.proquo.yml` or a built-in default, and how much comme
 its contribution:
 
 ```bash
-node packages/cli/bin/proquo.mjs --explain main...HEAD
+proquo --explain main...HEAD
 ```
 
 ### Exit codes
@@ -108,7 +110,7 @@ So with `failOn` in `.proquo.yml`, the CLI works as a git hook. This `.git/hooks
 
 ```sh
 #!/bin/sh
-node path/to/proquo/packages/cli/bin/proquo.mjs origin/main...HEAD
+proquo origin/main...HEAD
 [ $? -ne 1 ]
 ```
 
