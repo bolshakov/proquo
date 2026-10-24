@@ -26,6 +26,8 @@ npm trusted publishing needs the package to exist before it can be set up, so th
 1. `npm login`, then `npm publish --workspace proquo` from a checkout of the release tag.
 2. On npmjs.com, open the `proquo` package settings and add a trusted publisher: repository `bolshakov/proquo`,
    workflow `release.yml`, environment `release`.
-3. Create the `release` environment in the repository settings. Add required reviewers if you want a manual gate.
+3. In the package settings, set publishing access to "Require two-factor authentication and disallow tokens", and
+   revoke any token used for the first publish. Otherwise a token can publish without this workflow.
+4. Create the `release` environment in the repository settings. Add required reviewers if you want a manual gate.
 
 Later releases need no token.

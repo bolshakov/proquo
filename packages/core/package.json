@@ -1,6 +1,7 @@
 {
   "name": "@proquo/core",
   "version": "2.1.0",
+  "private": true,
   "description": "ProQuo pricing engine — the review-burden formula and effective-size metric",
   "license": "MIT",
   "main": "src/index.ts",

@@ -20,6 +20,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -51,6 +53,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -58,7 +62,7 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
 
-      - run: npm install
+      - run: npm ci --ignore-scripts
       - run: npm test
 
       - name: Check the built CLI reports the tag version
@@ -67,4 +71,4 @@ jobs:
           test "$(node packages/cli/bin/proquo.mjs --version)" = "${GITHUB_REF_NAME#v}"
 
       - name: Publish to npm
-        run: npm publish --workspace proquo ${{ needs.verify.outputs.prerelease == 'true' && '--tag next' || '' }}
+        run: npm publish --workspace proquo --provenance ${{ needs.verify.outputs.prerelease == 'true' && '--tag next' || '' }}
