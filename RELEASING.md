@@ -28,6 +28,9 @@ npm trusted publishing needs the package to exist before it can be set up, so th
    workflow `release.yml`, environment `release`.
 3. In the package settings, set publishing access to "Require two-factor authentication and disallow tokens", and
    revoke any token used for the first publish. Otherwise a token can publish without this workflow.
-4. Create the `release` environment in the repository settings. Add required reviewers if you want a manual gate.
+4. Create the `release` environment in the repository settings and add yourself under required reviewers. GitHub
+   creates a missing environment with no protection on first use, so without this step nothing stops a pushed tag
+   from publishing. There is no npm secret to guard. The approval gates the job that can request the publish
+   credential from npm.
 
-Later releases need no token.
+Later releases need no token. Each one waits for approval in the Actions run before the `npm` job starts.
