@@ -62,7 +62,7 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
 
-      - run: npm ci --ignore-scripts
+      - run: npm install --ignore-scripts
       - run: npm test
 
       - name: Check the built CLI reports the tag version
