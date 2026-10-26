@@ -85,7 +85,8 @@ npx proquo main...HEAD
 ```
 
 Or install it once with `npm install --global proquo` and run `proquo main...HEAD`. `proquo --version` prints the
-release it came from. It always matches the GitHub Action release with the same number.
+release it came from. It always matches the GitHub Action release with the same number. `proquo --help` lists the
+options.
 
 With no range argument it prices the working-tree diff. The CLI and the GitHub Action share the same pricing engine (`@proquo/core`), so a diff prices identically whether you check it locally or in CI.
 
