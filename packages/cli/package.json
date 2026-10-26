@@ -1,6 +1,6 @@
 {
   "name": "proquo",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "ProQuo command-line interface — price a local git diff in reviewer minutes",
   "license": "MIT",
   "bin": {
