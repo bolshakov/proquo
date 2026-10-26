@@ -21,8 +21,25 @@ function gitFullDiff(range: string | undefined): string {
 
 declare const PROQUO_VERSION: string;
 
+const HELP = `Usage: proquo [options] [range]
+
+Prices the review burden of a git diff.
+
+Arguments:
+  range       A git revision range such as main...HEAD. Defaults to the working-tree diff.
+
+Options:
+  --explain   Show a per-file calculation breakdown.
+  --version   Print the release version.
+  -h, --help  Show this help.
+`;
+
 function main(): void {
-    const {range, explain, version} = parseArgs(process.argv.slice(2));
+    const {range, explain, version, help} = parseArgs(process.argv.slice(2));
+    if (help) {
+        process.stdout.write(HELP);
+        return;
+    }
     if (version) {
         process.stdout.write(`${PROQUO_VERSION}\n`);
         return;
