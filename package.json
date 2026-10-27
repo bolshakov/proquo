@@ -1,6 +1,6 @@
 {
   "name": "proquo-monorepo",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "private": true,
   "description": "ProQuo — prices the review burden of every pull request",
   "workspaces": [
