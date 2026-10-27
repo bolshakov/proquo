@@ -1,6 +1,6 @@
 {
   "name": "@proquo/action",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "private": true,
   "description": "GitHub Action wrapper for ProQuo",
   "license": "MIT",
